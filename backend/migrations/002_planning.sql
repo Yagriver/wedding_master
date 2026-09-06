@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS planning (
+  lookup_key TEXT PRIMARY KEY,
+  payload TEXT NOT NULL,
+  version INTEGER NOT NULL DEFAULT 1
+);

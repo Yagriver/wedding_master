@@ -9,6 +9,7 @@ A simple, responsive, multilingual website built with HTML, CSS and JavaScript.
 - Responsive layouts for phones, tablets, and computers.
 - A day timeline, venue photos and map links, and space for accommodation information.
 - An RSVP form with name-based lookup, basic questions, and editable responses. Public registration opens once the backend is connected.
+- A protected management page with household grouping, invitation tracking, filters, private notes, table assignments, and CSV export.
 
 ## Preview and hosting
 
@@ -22,5 +23,7 @@ The public pages can be hosted on GitHub Pages. RSVP storage uses a separate bac
 - `day.js`: timeline content and translations.
 - `styles.css` and `day.css`: appearance and responsive layouts.
 - `assets/`: photographs.
+- `admin.html`, `admin.js`, and `admin.css`: the management screen.
+- `backend/SETUP.md`: storage and administrator access setup.
 
 Keep private guest information and credentials out of the repository.

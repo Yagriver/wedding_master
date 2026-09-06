@@ -18,8 +18,20 @@ Using the official Wrangler CLI in this folder:
 2. Create the database with `wrangler d1 create wedding-rsvp`.
 3. Put the returned database ID in `wrangler.jsonc`.
 4. Apply the schema: `wrangler d1 execute wedding-rsvp --remote --file=schema.sql`.
-5. Deploy: `wrangler deploy`.
-6. Set the production value in `../rsvp-config.js` to the returned HTTPS Worker URL, then push the frontend to GitHub.
+5. Apply the planning migration: `wrangler d1 execute wedding-rsvp --remote --file=migrations/002_planning.sql`.
+6. Set a long, random administrator key (at least 24 characters) using `wrangler secret put ADMIN_PASSWORD`. Never put it in the frontend or Git.
+7. Deploy: `wrangler deploy`.
+8. Set the production value in `../rsvp-config.js` to the returned HTTPS Worker URL, then push the frontend to GitHub.
+
+## Management
+
+Open `/admin.html`. Locally, a random administrator key is created at `../WEBSITE_DATA/admin-key.txt`; copy it into the sign-in field. The key is outside the served files and public repository. Production uses the Worker secret above. The key is held only in page memory and is cleared on sign-out or reload.
+
+Management supports invited households, private groups and notes, per-person table assignments, filters, totals, and CSV export. Add invitations using the same lead name and first surname used for RSVP; the normalized pair links responses automatically. Households without an invitation list are flagged for review.
+
+Guest answers and private planning records are stored in separate tables. Updating an RSVP cannot overwrite planning notes. Version checks reject stale planning edits. This first version assigns attendance, hotel and bus choices at household level; guest names, adult/child category and dietary notes are individual. Mixed attendance or different hotels within a household can use separate registrations for now.
+
+Catering and transport CSV exports include only confirmed rows in the current filter and exclude private planning notes. The full export includes them. Spreadsheet formula prefixes are escaped. Older free-text RSVPs are displayed without guessing individual names; review those records when converting them.
 
 Keep credentials out of source control. Do not upload the local test database. Back up production data through D1 export before schema changes.
 

@@ -11,8 +11,8 @@ function rsvpView(lang){
   const note=window.RSVP_API_URL==='/api'?`<p class="notice">${t.local}</p>`:'';
   if(!window.RSVP_API_URL)return `<p class="notice">${t.offline}</p>`;
   const input=(key,label,max=200,help='',type='text')=>`<label>${label}<input name="${key}" type="${type}" maxlength="${max}" value="${escapeRsvp(d[key])}" ${['firstName','surname'].includes(key)?'required autocomplete="off"':''}>${help?`<span class="help">${help}</span>`:''}</label>`;
-  const area=(key,label,help='')=>`<label>${label}<textarea name="${key}" maxlength="1000">${escapeRsvp(d[key])}</textarea>${help?`<span class="help">${help}</span>`:''}</label>`;
-  const select=(key,label,options)=>`<label>${label}<select name="${key}" required>${options.map(([value,text])=>`<option value="${value}" ${d[key]===value?'selected':''}>${text}</option>`).join('')}</select></label>`;
+  const area=(key,label,help='')=>key==='guestNames'?memberFields(lang):key==='dietary'?(d.dietary?`<p class="note">${escapeRsvp(d.dietary)}</p>`:''):`<label>${label}<textarea name="${key}" maxlength="1000">${escapeRsvp(d[key])}</textarea>${help?`<span class="help">${help}</span>`:''}</label>`;
+  const select=(key,label,options)=>key==='bus'?transportFields(lang):`<label>${label}<select name="${key}" required>${options.map(([value,text])=>`<option value="${value}" ${d[key]===value?'selected':''}>${text}</option>`).join('')}</select></label>`;
   const status=`<p class="rsvp-status" role="status" aria-live="polite">${t[s.busy?'loading':s.status]||''}</p>`;
   if(s.step==='lookup')return `${note}<form class="rsvp-form" id="rsvp-lookup"><p>${t.intro}</p><div class="rsvp-fields">${input('firstName',t.name,80)}${input('surname',t.surname,80)}</div><p class="note">${t.privacy}</p><button class="button" ${s.busy?'disabled':''}>${t.find}</button>${status}</form>`;
   const who=`<p class="rsvp-identity">${escapeRsvp(d.firstName)} ${escapeRsvp(d.surname)}</p>`;
@@ -33,20 +33,26 @@ async function lookupRsvp(){
 }
 function bindRsvp(){
   const s=rsvpState;
+  document.querySelectorAll('#rsvp-attending input,#rsvp-attending select').forEach(el=>{if(s.data.attendance==='no')el.disabled=true;});
   if(s.busy)document.querySelectorAll('.rsvp-form input,.rsvp-form select,.rsvp-form textarea').forEach(el=>el.disabled=true);
   document.querySelectorAll('.rsvp-form input,.rsvp-form select,.rsvp-form textarea').forEach(el=>el.addEventListener('input',()=>{
+    if(el.dataset.member!==undefined){s.data.members[Number(el.dataset.member)][el.dataset.field]=el.value;s.dirty=true;return;}
+    if(el.dataset.transport){s.data.transport[el.dataset.transport]=el.value;s.dirty=true;return;}
     s.data[el.name]=el.name==='guestCount'?Number(el.value):el.value;s.dirty=s.step==='edit';s.status='';
     if(el.name==='attendance'){
       if(el.value==='no')s.data.guestCount=0;else if(s.data.guestCount===0)s.data.guestCount=1;
       const box=document.querySelector('#rsvp-attending');box.hidden=el.value==='no';
       const count=box.querySelector('[name="guestCount"]');count.value=s.data.guestCount;count.min=el.value==='yes'?1:0;
+      render();
     }
   }));
+  document.querySelector('[name="guestCount"]')?.addEventListener('change',()=>{if(Number.isInteger(s.data.guestCount)&&s.data.guestCount>=0&&s.data.guestCount<=20)render();});
   document.querySelector('#rsvp-lookup')?.addEventListener('submit',event=>{event.preventDefault();if(!s.busy)lookupRsvp();});
   document.querySelector('#rsvp-answer')?.addEventListener('submit',async event=>{
     event.preventDefault();if(s.busy||s.step==='saved')return;
     s.busy=true;s.status='';render();
-    const data={...s.data};if(data.attendance==='no')Object.assign(data,{guestCount:0,guestNames:'',hotel:'',dietary:'',bus:'unknown'});
+    const data={...s.data,members:(s.data.members||[]).slice(0,s.data.guestCount)};
+    if(data.attendance==='no')Object.assign(data,{guestCount:0,members:[],guestNames:'',hotel:'',dietary:'',bus:'unknown',transport:{church:'unknown',venue:'unknown',return:'unknown'}});
     try{const result=await rsvpRequest('save',{...data,version:s.version});s.data=result.data;s.version=result.version;s.step='saved';s.dirty=false;}
     catch(e){s.status=['conflict','invalid'].includes(e.message)?e.message:'error';}
     finally{s.busy=false;render();}

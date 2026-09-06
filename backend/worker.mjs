@@ -1,3 +1,4 @@
+import {admin} from './admin.mjs';
 // Name-only access is intentional: this is lookup, not identity verification.
 export const normalize = value => value.normalize('NFD').replace(/\p{M}/gu, '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en');
 function text(value, max, required=false) {
@@ -15,7 +16,20 @@ export function validate(body) {
   if(!Number.isInteger(body.guestCount) || body.guestCount<0 || body.guestCount>20) throw new Error('INVALID');
   if(body.attendance==='yes' && body.guestCount<1) throw new Error('INVALID');
   if(body.attendance==='no' && body.guestCount!==0) throw new Error('INVALID');
-  return {firstName:who.firstName,surname:who.surname,attendance:body.attendance,guestCount:body.guestCount,
+  const extra={};
+  if(body.members!==undefined){
+    if(!Array.isArray(body.members)||body.members.length!==body.guestCount)throw new Error('INVALID');
+    extra.members=body.members.map(m=>{
+      if(!m||!['adult','child'].includes(m.kind))throw new Error('INVALID');
+      return {id:text(m.id,80,true),name:text(m.name,160,true),kind:m.kind,dietary:text(m.dietary,500)};
+    });
+    if(new Set(extra.members.map(m=>m.id)).size!==extra.members.length)throw new Error('INVALID');
+  }
+  if(body.transport!==undefined){
+    extra.transport={};
+    for(const leg of ['church','venue','return']){if(!['yes','no','unknown'].includes(body.transport[leg]))throw new Error('INVALID');extra.transport[leg]=body.transport[leg];}
+  }
+  return {...extra,firstName:who.firstName,surname:who.surname,attendance:body.attendance,guestCount:body.guestCount,
     guestNames:text(body.guestNames,1000),hotel:text(body.hotel,200),dietary:text(body.dietary,1000),
     bus:body.bus,message:text(body.message,1000)};
 }
@@ -24,19 +38,20 @@ export async function handle(request,env) {
   const allowed=(env.ALLOWED_ORIGINS||'https://yagriver.github.io').split(',');
   const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Vary':'Origin','X-Content-Type-Options':'nosniff'};
   if(origin && !allowed.includes(origin)) return new Response(JSON.stringify({error:'ORIGIN'}),{status:403,headers});
-  if(origin) Object.assign(headers,{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'});
+  if(origin) Object.assign(headers,{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'});
   const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
   if(request.method==='OPTIONS') return new Response(null,{status:204,headers});
   const route=new URL(request.url).pathname.replace(/^\/api/,'');
-  if(!['/lookup','/save'].includes(route)) return reply({error:'NOT_FOUND'},404);
+  if(!['/lookup','/save','/admin/list','/admin/plan'].includes(route)) return reply({error:'NOT_FOUND'},404);
   if(request.method!=='POST') return reply({error:'METHOD'},405);
   if(!request.headers.get('Content-Type')?.startsWith('application/json')) return reply({error:'INVALID'},415);
   try {
-    if(Number(request.headers.get('Content-Length'))>12000) return reply({error:'INVALID'},413);
+    if(Number(request.headers.get('Content-Length'))>24000) return reply({error:'INVALID'},413);
     const raw=await request.text();
-    if(raw.length>12000) return reply({error:'INVALID'},413);
+    if(raw.length>24000) return reply({error:'INVALID'},413);
     let body; try {body=JSON.parse(raw);} catch {return reply({error:'INVALID'},400);}
     if(!body || typeof body!=='object' || Array.isArray(body)) return reply({error:'INVALID'},400);
+    if(route.startsWith('/admin/'))return await admin(request,env,route,body,reply);
     let who; try {who=identity(body);} catch {return reply({error:'INVALID'},400);}
     if(route==='/lookup') {
       const row=await env.DB.prepare('SELECT payload, version FROM responses WHERE lookup_key = ?').bind(who.key).first();
