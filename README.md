@@ -8,13 +8,13 @@ A simple, responsive, multilingual website built with HTML, CSS and JavaScript.
 - Spanish, Italian, and English, with a language selector that remembers your choice.
 - Responsive layouts for phones, tablets, and computers.
 - A day timeline, venue photos and map links, and space for accommodation information.
-- An RSVP information page. Registration and saved responses are not implemented yet.
+- An RSVP form with name-based lookup, basic questions, and editable responses. Public registration opens once the backend is connected.
 
 ## Preview and hosting
 
 Open `index.html` in a browser to preview the website locally. No installation or build step is required.
 
-The website can be hosted on GitHub Pages. The current version is static and does not require a database.
+The public pages can be hosted on GitHub Pages. RSVP storage uses a separate backend; see `backend/SETUP.md` for local testing and setup.
 
 ## Editing
 

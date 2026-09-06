@@ -33,7 +33,9 @@ function render(){
     const day=dayCopy[language];
     content=`<section class="page">${heading(day.title,day.intro)}<p class="notice">${day.notice}</p><ol class="day-timeline">${day.events.map(([title,body],i)=>`<li><span class="timeline-number" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><div><p class="timeline-time">${day.time}</p><h2>${title}</h2><p>${body}</p></div></li>`).join('')}</ol></section>`;
   }
+  if(page==='rsvp') content=`<section class="page">${heading(t.rsvpTitle,t.rsvpIntro)}${rsvpView(language)}</section>`;
   document.querySelector('#main').innerHTML=content;
+  if(page==='rsvp')bindRsvp();
 }
 document.querySelectorAll('[data-lang]').forEach(button=>button.addEventListener('click',()=>{language=button.dataset.lang;try{localStorage.setItem('wedding-language',language);}catch{}render();}));
 window.addEventListener('hashchange',()=>{render();document.querySelector('#main').focus({preventScroll:true});window.scrollTo(0,0);});
