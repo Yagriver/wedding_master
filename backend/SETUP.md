@@ -1,6 +1,6 @@
 # RSVP storage
 
-The public frontend is hosted on GitHub Pages. The API is designed for a Cloudflare Worker with a D1 database. The public form remains closed until its API URL is configured.
+The public frontend is hosted on GitHub Pages. The API is deployed on Cloudflare Workers with a D1 database and configured in `rsvp-config.js`. Local previews use a separate test database.
 
 ## Local preview
 

@@ -7,6 +7,6 @@
   "d1_databases": [{
     "binding": "DB",
     "database_name": "wedding-rsvp",
-    "database_id": "REPLACE_WITH_CREATED_DATABASE_ID"
+    "database_id": "d220daa3-9d53-4c7d-8d44-ec7a7eedf3e8"
   }]
 }
