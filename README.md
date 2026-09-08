@@ -10,6 +10,7 @@ A simple, responsive, multilingual website built with HTML, CSS and JavaScript.
 - A day timeline, venue photos and map links, and space for accommodation information.
 - An RSVP form with name-based lookup, basic questions, and editable responses, connected to persistent storage.
 - A protected management page with household grouping, invitation tracking, filters, private notes, table assignments, and CSV export.
+- A protected finance page (`finance.html`) for EUR quotes, contracts, item-level IVA, payment deadlines, dated payments/refunds, and finance CSV exports.
 
 ## Preview and hosting
 

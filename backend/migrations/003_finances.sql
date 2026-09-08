@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS finances (
+  id TEXT PRIMARY KEY,
+  payload TEXT NOT NULL,
+  version INTEGER NOT NULL DEFAULT 1,
+  updated_at TEXT NOT NULL
+);

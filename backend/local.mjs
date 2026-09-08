@@ -6,11 +6,12 @@ import {DatabaseSync} from 'node:sqlite';
 import {randomBytes} from 'node:crypto';
 import {handle} from './worker.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const dataDir=path.resolve(root,'..','WEBSITE_DATA');
+const dataDir=process.env.WEDDING_DATA_DIR?path.resolve(process.env.WEDDING_DATA_DIR):path.resolve(root,'..','WEBSITE_DATA');
 fs.mkdirSync(dataDir,{recursive:true});
 const db=new DatabaseSync(path.join(dataDir,'rsvp.sqlite'));
 db.exec(fs.readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));
 db.exec(fs.readFileSync(new URL('./migrations/002_planning.sql',import.meta.url),'utf8'));
+db.exec(fs.readFileSync(new URL('./migrations/003_finances.sql',import.meta.url),'utf8'));
 const passwordFile=path.join(dataDir,'admin-key.txt');
 if(!fs.existsSync(passwordFile))fs.writeFileSync(passwordFile,randomBytes(32).toString('hex'),{mode:0o600});
 const ADMIN_PASSWORD=fs.readFileSync(passwordFile,'utf8').trim();
@@ -21,6 +22,7 @@ const DB = { prepare(sql) { return { bind(...args) { return {
 }; } }; } };
 const publicFiles=new Set(['index.html','styles.css','day.css','day.js','app.js','rsvp.css','rsvp.js','rsvp-config.js','assets/couple.jpeg','assets/church.jpg','assets/villa.jpg']);
 for(const file of ['admin.html','admin.js','admin.css','guest-fields.js'])publicFiles.add(file);
+for(const file of ['finance.html','finance.js','finance.css','finance-model.mjs'])publicFiles.add(file);
 const server=http.createServer(async(req,res)=>{
   try {
     const url=new URL(req.url,'http://127.0.0.1:4173');
@@ -33,7 +35,7 @@ const server=http.createServer(async(req,res)=>{
     }
     const file=decodeURIComponent(url.pathname).replace(/^\//,'')||'index.html';
     if(!publicFiles.has(file)){res.writeHead(404);res.end();return;}
-    const mime={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.jpeg':'image/jpeg','.jpg':'image/jpeg'};
+    const mime={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.jpeg':'image/jpeg','.jpg':'image/jpeg'};
     res.writeHead(200,{'Content-Type':mime[path.extname(file)],'Cache-Control':'no-store'});res.end(fs.readFileSync(path.join(root,file)));
   } catch {res.writeHead(500);res.end('Unavailable');}
 });

@@ -42,7 +42,7 @@ export async function handle(request,env) {
   const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
   if(request.method==='OPTIONS') return new Response(null,{status:204,headers});
   const route=new URL(request.url).pathname.replace(/^\/api/,'');
-  if(!['/lookup','/save','/admin/list','/admin/plan'].includes(route)) return reply({error:'NOT_FOUND'},404);
+  if(!['/lookup','/save','/admin/list','/admin/plan','/admin/finance/list','/admin/finance/save','/admin/finance/delete'].includes(route)) return reply({error:'NOT_FOUND'},404);
   if(request.method!=='POST') return reply({error:'METHOD'},405);
   if(!request.headers.get('Content-Type')?.startsWith('application/json')) return reply({error:'INVALID'},415);
   try {
