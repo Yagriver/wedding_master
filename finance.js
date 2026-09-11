@@ -4,8 +4,35 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=n=>new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR'}).format(n/100);
 const decimal=n=>(n/100).toFixed(2),today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 let key='',records=[],editing=null,dirty=false,saving=false;
+let calendarMonth=today().slice(0,7),calendarSelected=today();
+function renderCalendar(){
+  const events=new Map();
+  const add=(date,event)=>{if(!events.has(date))events.set(date,[]);events.get(date).push(event);};
+  for(const r of records){
+    if(['contracted','completed'].includes(r.status))for(const m of r.milestones){const amount=dueAmount(r,m);if(amount>0)add(m.date,{kind:'deadline',text:`Deadline · ${r.supplier} · ${m.label} · ${money(amount)} unpaid`});}
+    for(const p of r.payments)if(p.kind==='payment')add(p.date,{kind:'paid',text:`Payment made · ${r.supplier} · ${money(p.amount)}${p.reference?' · '+p.reference:''}`});
+  }
+  const [year,month]=calendarMonth.split('-').map(Number),first=new Date(year,month-1,1);
+  $('calendar-month').textContent=first.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  const offset=(first.getDay()+6)%7,count=new Date(year,month,0).getDate();
+  let html=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<span class="weekday">${d}</span>`).join('');
+  html+='<span aria-hidden="true"></span>'.repeat(offset);
+  for(let day=1;day<=count;day++){
+    const date=`${calendarMonth}-${String(day).padStart(2,'0')}`,items=events.get(date)||[],deadline=items.some(e=>e.kind==='deadline'),paid=items.some(e=>e.kind==='paid');
+    html+=`<button type="button" data-date="${date}" class="calendar-day${deadline?' has-deadline':''}${paid?' has-paid':''}" aria-label="${date}${deadline?', unpaid deadline':''}${paid?', payment made':''}" aria-pressed="${date===calendarSelected}" ${date===today()?'aria-current="date"':''}><span>${day}</span><span class="day-markers" aria-hidden="true">${deadline?'<i class="deadline-dot"></i>':''}${paid?'<i class="paid-dot"></i>':''}</span></button>`;
+  }
+  $('calendar-days').innerHTML=html;
+  $('calendar-days').querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{calendarSelected=b.dataset.date;renderCalendar();$('calendar-days').querySelector(`[data-date="${calendarSelected}"]`).focus();});
+  const selected=events.get(calendarSelected)||[];
+  $('calendar-events').innerHTML=`<h3>${esc(calendarSelected)}</h3>`+(selected.length?selected.map(e=>`<p class="${e.kind}-label">${esc(e.text)}</p>`).join(''):'<p>No unpaid deadlines or payments on this day.</p>');
+}
+function moveCalendar(delta){const [year,month]=calendarMonth.split('-').map(Number),d=new Date(year,month-1+delta,1);calendarMonth=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;calendarSelected=calendarMonth+'-01';renderCalendar();}
+$('calendar-prev').onclick=()=>moveCalendar(-1);
+$('calendar-next').onclick=()=>moveCalendar(1);
+$('calendar-today').onclick=()=>{calendarSelected=today();calendarMonth=calendarSelected.slice(0,7);renderCalendar();};
 async function api(route,body={}){const r=await fetch(window.RSVP_API_URL.replace(/\/$/,'')+'/admin/finance/'+route,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});if(!r.ok)throw new Error(r.status===409?'This record changed on another device. Copy your changes, close this editor, and refresh before trying again.':r.status===401?'Administrator key not accepted.':r.status===400?'Check the fields, dates and amounts.':r.status===413?'This record is too large. Shorten the notes or split it into separate quotes.':'Finance storage is unavailable. Check the connection and that the finance migration has been applied.');return r.json();}
 function render(){
+  renderCalendar();
   const accepted=records.filter(r=>['contracted','completed'].includes(r.status));
   const total=accepted.reduce((a,r)=>{const t=totals(r);a.net+=t.net;a.tax+=t.tax;a.total+=t.total;a.balance+=Math.max(0,t.balance);a.netBalance+=Math.max(0,t.netBalance);a.taxBalance+=Math.max(0,t.taxBalance);return a;},{net:0,tax:0,total:0,balance:0,netBalance:0,taxBalance:0});
   const paid=records.reduce((n,r)=>n+totals(r).paid,0);
@@ -96,7 +123,7 @@ $('close').onclick=close;$('editor').addEventListener('cancel',e=>{e.preventDefa
 for(const [id,fn] of [['add-line',addLine],['add-milestone',addMilestone],['add-payment',addPayment]])$(id).onclick=()=>{fn();dirty=true;preview();};
 form.onsubmit=async e=>{e.preventDefault();if(saving)return;let record;try{record=validateFinance(collect());}catch{$('editor-status').textContent='Complete required fields and check amounts, dates, IVA rates and document URL (http or https).';return;}saving=true;const controls=[...form.querySelectorAll('input,select,textarea,button')];controls.forEach(el=>el.disabled=true);try{await api('save',{id:editing.id,version:editing.version,record});dirty=false;$('editor').close();$('status').textContent='Finance record saved.';try{await refresh();}catch{$('status').textContent='Saved successfully. Refresh to reload the latest list.';}}catch(err){$('editor-status').textContent=err.message;}finally{saving=false;controls.forEach(el=>el.disabled=false);updatePaymentControls();}};
 $('login-form').onsubmit=async e=>{e.preventDefault();key=$('key').value;$('status').textContent='Loading finances…';try{await refresh();$('key').value='';$('login').hidden=true;$('dashboard').hidden=false;$('status').textContent='';}catch(err){key='';$('status').textContent=err.message;}};
-$('logout').onclick=()=>{key='';records=[];editing=null;dirty=false;form.reset();for(const id of ['rows','stats','upcoming','lines','payments','milestones','totals','editor-status','allocation-note'])$(id).innerHTML='';$('editor').close();$('dashboard').hidden=true;$('login').hidden=false;$('status').textContent='Signed out.';};
+$('logout').onclick=()=>{key='';records=[];editing=null;dirty=false;calendarSelected=today();calendarMonth=calendarSelected.slice(0,7);form.reset();for(const id of ['rows','stats','upcoming','calendar-days','calendar-events','calendar-month','lines','payments','milestones','totals','editor-status','allocation-note'])$(id).innerHTML='';$('editor').close();$('dashboard').hidden=true;$('login').hidden=false;$('status').textContent='Signed out.';};
 $('add').onclick=()=>open();$('refresh').onclick=()=>refresh().then(()=>$('status').textContent='Updated.').catch(e=>$('status').textContent=e.message);$('search').oninput=render;$('filter').onchange=render;
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 function csv(name,fields,rows){const cell=v=>'"'+(/^[\s]*[=+\-@]/.test(String(v??''))?"'":'')+String(v??'').replace(/"/g,'""')+'"';const data='\uFEFF'+[fields,...rows].map(row=>row.map(cell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
