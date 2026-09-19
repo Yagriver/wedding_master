@@ -1,4 +1,4 @@
-import {validateFinance} from '../finance-model.mjs';
+import {validateItems} from '../finance-items.mjs';
 export async function finance(env,route,body,reply){
   if(route==='/admin/finance/list'){
     const rows=await env.DB.prepare('SELECT id,payload,version,updated_at FROM finances ORDER BY updated_at DESC').bind().all();
@@ -7,7 +7,7 @@ export async function finance(env,route,body,reply){
   let record;
   try{
     if(typeof body.id!=='string'||!/^[-\w]{1,80}$/.test(body.id)||!Number.isInteger(body.version)||body.version<0)throw new Error();
-    if(route!=='/admin/finance/delete')record=validateFinance(body.record);
+    if(route!=='/admin/finance/delete')record=validateItems(body.record);
   }catch{return reply({error:'INVALID'},400);}
   if(route==='/admin/finance/delete'){
     if(body.version<1)return reply({error:'INVALID'},400);

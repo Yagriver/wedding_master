@@ -1,136 +1,53 @@
-import {cents,paymentSplit,lineTotals,totals,dueAmount,validateFinance} from './finance-model.mjs';
-const $=id=>document.getElementById(id),form=$('finance-form');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money=n=>new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR'}).format(n/100);
-const decimal=n=>(n/100).toFixed(2),today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
-let key='',records=[],editing=null,dirty=false,saving=false;
-let calendarMonth=today().slice(0,7),calendarSelected=today();
-function renderCalendar(){
-  const events=new Map();
-  const add=(date,event)=>{if(!events.has(date))events.set(date,[]);events.get(date).push(event);};
-  for(const r of records){
-    if(['contracted','completed'].includes(r.status))for(const m of r.milestones){const amount=dueAmount(r,m);if(amount>0)add(m.date,{kind:'deadline',text:`Deadline · ${r.supplier} · ${m.label} · ${money(amount)} unpaid`});}
-    for(const p of r.payments)if(p.kind==='payment')add(p.date,{kind:'paid',text:`Payment made · ${r.supplier} · ${money(p.amount)}${p.reference?' · '+p.reference:''}`});
-  }
-  const [year,month]=calendarMonth.split('-').map(Number),first=new Date(year,month-1,1);
-  $('calendar-month').textContent=first.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-  const offset=(first.getDay()+6)%7,count=new Date(year,month,0).getDate();
-  let html=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<span class="weekday">${d}</span>`).join('');
-  html+='<span aria-hidden="true"></span>'.repeat(offset);
-  for(let day=1;day<=count;day++){
-    const date=`${calendarMonth}-${String(day).padStart(2,'0')}`,items=events.get(date)||[],deadline=items.some(e=>e.kind==='deadline'),paid=items.some(e=>e.kind==='paid');
-    html+=`<button type="button" data-date="${date}" class="calendar-day${deadline?' has-deadline':''}${paid?' has-paid':''}" aria-label="${date}${deadline?', unpaid deadline':''}${paid?', payment made':''}" aria-pressed="${date===calendarSelected}" ${date===today()?'aria-current="date"':''}><span>${day}</span><span class="day-markers" aria-hidden="true">${deadline?'<i class="deadline-dot"></i>':''}${paid?'<i class="paid-dot"></i>':''}</span></button>`;
-  }
-  $('calendar-days').innerHTML=html;
-  $('calendar-days').querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{calendarSelected=b.dataset.date;renderCalendar();$('calendar-days').querySelector(`[data-date="${calendarSelected}"]`).focus();});
-  const selected=events.get(calendarSelected)||[];
-  $('calendar-events').innerHTML=`<h3>${esc(calendarSelected)}</h3>`+(selected.length?selected.map(e=>`<p class="${e.kind}-label">${esc(e.text)}</p>`).join(''):'<p>No unpaid deadlines or payments on this day.</p>');
-}
-function moveCalendar(delta){const [year,month]=calendarMonth.split('-').map(Number),d=new Date(year,month-1+delta,1);calendarMonth=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;calendarSelected=calendarMonth+'-01';renderCalendar();}
-$('calendar-prev').onclick=()=>moveCalendar(-1);
-$('calendar-next').onclick=()=>moveCalendar(1);
-$('calendar-today').onclick=()=>{calendarSelected=today();calendarMonth=calendarSelected.slice(0,7);renderCalendar();};
-async function api(route,body={}){const r=await fetch(window.RSVP_API_URL.replace(/\/$/,'')+'/admin/finance/'+route,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});if(!r.ok)throw new Error(r.status===409?'This record changed on another device. Copy your changes, close this editor, and refresh before trying again.':r.status===401?'Administrator key not accepted.':r.status===400?'Check the fields, dates and amounts.':r.status===413?'This record is too large. Shorten the notes or split it into separate quotes.':'Finance storage is unavailable. Check the connection and that the finance migration has been applied.');return r.json();}
+import {today,summary,events,effectiveStatus,remainingMonth,paymentSymbol,monthCompleted,validateItems} from './finance-items.mjs?v=items-20260919';
+import {lineTotals,cents} from './finance-model.mjs';
+const $=id=>document.getElementById(id),form=$('supplier-form'),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR'}).format(n/100),decimal=n=>(n/100).toFixed(2);
+let upcomingPage=0;
+const upcomingPageSize=5;
+let key='';
+let state,editing,dirty=false,saving=false,month=today().slice(0,7),selected=today();
+async function api(route,body={}){const response=await fetch(window.RSVP_API_URL.replace(/\/$/,'')+'/admin/finance/'+route,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error(response.status===401?'Administrator key not accepted.':response.status===409?'This record changed. Copy your edits, close the form, and refresh before trying again.':response.status===400?'Check the required fields, dates, amounts and document link.':'Unable to reach finance storage. Please try again.');return response.json();}
+async function load(){state=await api('list');render();}
+const breakdown=(net,tax)=>`<div class="price-parts"><span>Net <b>${money(net)}</b></span><span>IVA only <b>${money(tax)}</b></span></div>`;
 function render(){
-  renderCalendar();
-  const accepted=records.filter(r=>['contracted','completed'].includes(r.status));
-  const total=accepted.reduce((a,r)=>{const t=totals(r);a.net+=t.net;a.tax+=t.tax;a.total+=t.total;a.balance+=Math.max(0,t.balance);a.netBalance+=Math.max(0,t.netBalance);a.taxBalance+=Math.max(0,t.taxBalance);return a;},{net:0,tax:0,total:0,balance:0,netBalance:0,taxBalance:0});
-  const paid=records.reduce((n,r)=>n+totals(r).paid,0);
-  const netPaid=records.reduce((n,r)=>n+totals(r).netPaid,0),taxPaid=records.reduce((n,r)=>n+totals(r).taxPaid,0);
-  const unallocated=records.reduce((n,r)=>n+totals(r).unallocatedCount,0);
-  $('allocation-note').textContent=unallocated?`${unallocated} payment/refund entries still need a net / IVA split. They count toward total paid, but are excluded from net paid and IVA paid. Component balances are provisional until allocated.`:'';
-  $('stats').innerHTML=[
-    ['committed','Committed including IVA',total.total,total.net,total.tax],
-    ['paid','Total paid',paid,netPaid,taxPaid],
-    ['outstanding','Outstanding including IVA',total.balance,total.netBalance,total.taxBalance]
-  ].map(([style,label,amount,net,tax])=>`<div class="finance-card ${style}"><h2>${label}</h2><strong>${money(amount)}</strong><div class="card-details"><span>Before IVA <b>${money(net)}</b></span><span>IVA <b>${money(tax)}</b></span></div></div>`).join('');
-  const due=accepted.flatMap(r=>r.milestones.map(m=>({r,m,amount:dueAmount(r,m)}))).filter(x=>x.amount>0).sort((a,b)=>a.m.date.localeCompare(b.m.date));
-  $('upcoming').innerHTML=due.length?due.map(({r,m,amount})=>`<p class="${m.date<today()?'overdue':''}">${esc(m.date)} · ${esc(r.supplier)} · ${esc(m.label)} · ${money(amount)}${m.date<today()?' — overdue':''}</p>`).join(''):'<p>No unpaid deadlines on accepted contracts.</p>';
-  const q=$('search').value.toLowerCase(),status=$('filter').value;
-  const visible=records.filter(r=>(!status||r.status===status)&&[r.supplier,r.title,r.category,r.reference].join(' ').toLowerCase().includes(q));
-  $('rows').innerHTML=visible.length?visible.map(r=>{const t=totals(r);return `<tr><td>${esc(r.supplier)}<small>${esc(r.title)} · ${esc(r.category)}</small><small>${esc(r.reference)}</small></td><td>${esc(r.status)}</td><td>${money(t.net)}</td><td>${money(t.tax)}</td><td>${money(t.total)}</td><td>${money(t.paid)}<small>Net ${money(t.netPaid)} · IVA ${money(t.taxPaid)}</small>${t.unallocatedCount?`<small>Split pending: ${money(t.unallocatedPaid)} (${t.unallocatedCount} entries)</small>`:''}</td><td><small>Net ${money(t.netBalance)} · IVA ${money(t.taxBalance)}${t.unallocatedCount?' (provisional)':''}</small>${money(Math.abs(t.balance))}${t.balance<0?' credit':r.status==='quote'?' estimated':''}</td><td><button class="button secondary" data-edit="${esc(r.id)}">Manage</button></td></tr>`;}).join(''):'<tr><td colspan="8">No records yet or no matching results. Add a quote to get started.</td></tr>';
-  $('rows').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>open(records.find(r=>r.id===b.dataset.edit)));
+ const accepted=state.records.filter(r=>effectiveStatus(r)!=='quote');
+ const sum=(records,key)=>records.reduce((n,r)=>n+summary(r)[key],0);
+ $('stats').innerHTML=[['Booked total',sum(accepted,'total'),sum(accepted,'net'),sum(accepted,'tax')],['Paid so far',sum(state.records,'paid'),sum(state.records,'netPaid'),sum(state.records,'taxPaid')],['Still to pay',sum(accepted,'balance'),sum(accepted,'netBalance'),sum(accepted,'taxBalance')]].map(([label,total,net,tax])=>`<div class="stat"><h2>${label}</h2><small>Including IVA</small><strong>${money(total)}</strong>${breakdown(net,tax)}</div>`).join('');
+ const q=$('search').value.toLowerCase();
+ $('suppliers').innerHTML=state.records.filter(r=>[r.supplier,r.title].join(' ').toLowerCase().includes(q)).map(r=>{const t=summary(r),status=effectiveStatus(r);return `<article class="supplier ${status}"><div class="identity"><h3>${esc(r.supplier)}</h3><span class="status-badge">${status==='completed'?'✓ Completed · Fully paid':status==='quote'?'Quote · Provisional':'Booked'}</span><p>${esc(r.title)} · ${r.items.length} item${r.items.length===1?'':'s'}</p></div><div class="supplier-prices"><div><small>${status==='quote'?'Provisional total':'Total'} including IVA</small><strong>${money(t.total)}</strong>${breakdown(t.net,t.tax)}</div><div><small>Paid including IVA</small><strong>${money(t.paid)}</strong>${breakdown(t.netPaid,t.taxPaid)}</div><div><small>${status==='quote'?'Provisional remaining':'Remaining'} including IVA</small><strong>${money(t.balance)}</strong>${breakdown(t.netBalance,t.taxBalance)}</div></div><button data-edit="${esc(r.id)}" class="secondary">Open supplier</button></article>`;}).join('')||'<p>No matching suppliers.</p>';
+ $('suppliers').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>open(state.records.find(r=>r.id===b.dataset.edit)));
+ renderUpcoming();calendar();
 }
-async function refresh(){const data=await api('list');records=data.records;render();}
-const input=(label,field,value='',type='text',extra='')=>`<label>${label}<input data-field="${field}" type="${type}" value="${esc(value)}" ${extra}></label>`;
-const select=(label,field,value,options)=>`<label>${label}<select data-field="${field}">${options.map(([v,l])=>`<option value="${esc(v)}" ${v===value?'selected':''}>${esc(l)}</option>`).join('')}</select></label>`;
-function append(container,html,id=''){
-  const el=document.createElement('div');el.className='entry';el.dataset.id=id;el.innerHTML=html+'<button type="button" class="button secondary remove">Remove</button>';
-  el.querySelector('.remove').onclick=()=>{if(saving)return;if(container==='milestones'&&[...$('payments').children].some(p=>p.querySelector('[data-field="milestone"]').value===id)){$('editor-status').textContent='Reassign linked payments before removing this deadline.';return;}if(!confirm('Remove this entry? This takes effect when you save.'))return;el.remove();dirty=true;updateMilestones();preview();};
-  $(container).append(el);
+function renderUpcoming(){
+ const due=events(state.records).filter(e=>e.kind==='deadline'),pages=Math.ceil(due.length/upcomingPageSize);
+ upcomingPage=Math.max(0,Math.min(upcomingPage,pages-1));
+ const start=upcomingPage*upcomingPageSize,visible=due.slice(start,start+upcomingPageSize);
+ $('upcoming').innerHTML=visible.map(e=>`<article class="due-row compact-due ${e.date<today()?'red':''}"><div class="due-date"><span class="payment-symbol" role="img" aria-label="${e.rate>=800?'Card: IVA at least 8%':'Dollar: IVA below 8%'}" title="IVA ${decimal(e.rate)}%">${e.rate>=800?'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 9h20M6 15h4"/></svg>':paymentSymbol(e.rate)}</span><time datetime="${esc(e.date)}">${esc(e.date)}</time>${e.date<today()?'<span class="due-overdue">Overdue</span>':''}</div><div class="due-description"><strong>${esc(e.supplier)}</strong><span>${esc(e.label)}</span></div><div class="due-price"><strong>${money(e.amount)} <span>incl. IVA</span></strong><span>Net ${money(e.net)} · IVA ${money(e.tax)}</span></div></article>`).join('')||'<p>No unpaid deadlines on booked services.</p>';
+ $('upcoming-pagination').hidden=pages<=1;
+ $('upcoming-page').textContent=due.length?`${start+1}–${Math.min(start+upcomingPageSize,due.length)} of ${due.length}`:'';
+ $('upcoming-prev').disabled=upcomingPage===0;
+ $('upcoming-next').disabled=upcomingPage>=pages-1;
 }
-function addLine(l={description:'',amount:0,basis:'net',rate:'',taxNote:''}){append('lines',input('Description','description',l.description,'text','required maxlength="200"')+input('Item amount (EUR)','amount',decimal(l.amount),'number','required min="0" max="99999999.99" step="0.01"')+select('Amount is','basis',l.basis,[['net','Before IVA'],['gross','Including IVA']])+input('IVA rate (%)','rate',l.rate===''?'':decimal(l.rate),'number','required min="0" max="100" step="0.01"')+input('Tax note / exemption reason','taxNote',l.taxNote,'text','maxlength="200"'));}
-function addMilestone(m={id:crypto.randomUUID(),label:'',date:'',amount:0}){append('milestones',input('Deadline label','label',m.label,'text','required maxlength="160"')+input('Due date','date',m.date,'date','required')+input('Amount incl. IVA (EUR)','amount',decimal(m.amount),'number','required min="0" max="99999999.99" step="0.01"'),m.id);updateMilestones();}
-function milestoneOptions(){return [['','Unassigned'],...[...$('milestones').children].map(el=>[el.dataset.id,el.querySelector('[data-field="label"]').value||'Untitled deadline'])];}
-function updateMilestones(){for(const el of $('payments').querySelectorAll('[data-field="milestone"]')){const value=el.value;el.innerHTML=milestoneOptions().map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('');el.value=value;}}
-function addPayment(p={date:today(),amount:0,kind:'payment',method:'',reference:'',milestone:''}){
-  const existing=Object.hasOwn(p,'netAmount')||p.amount>0;
-  const mode=p.paymentMode||(existing?'legacy':'with');
-  const rates=[...new Set([...$('lines').querySelectorAll('[data-field="rate"]')].map(el=>el.value).filter(v=>v!==''))];
-  const rate=p.ivaRate!==undefined?decimal(p.ivaRate):rates.length===1?rates[0]:'';
-  append('payments',select('Type','kind',p.kind,[['payment','Payment'],['refund','Refund received']])+input('Date paid / refunded','date',p.date,'date','required')+
-    input('Amount actually paid / refunded (EUR)','amount',decimal(p.amount),'number','required min="0.01" max="99999999.99" step="0.01"')+
-    select('Payment includes','paymentMode',mode,[['with','With IVA (included in amount)'],['without','Without IVA (net only)'],...(existing?[['legacy','Keep existing allocation']]:[])])+
-    input('IVA rate (%)','ivaRate',rate,'number','min="0" max="100" step="0.01"')+
-    '<p class="payment-breakdown" aria-live="polite"></p>'+
-    select('Applies to deadline','milestone',p.milestone,milestoneOptions())+input('Payment method','method',p.method,'text','maxlength="80" placeholder="Bank transfer, card, cash…"')+input('Receipt / invoice / bank reference','reference',p.reference,'text','maxlength="200"'));
-  $('payments').lastElementChild.dataset.original=JSON.stringify(p);
-  updatePaymentControls();
-}
-function updatePaymentControls(){
-  for(const el of $('payments').children){
-    const mode=el.querySelector('[data-field="paymentMode"]').value;
-    const rate=el.querySelector('[data-field="ivaRate"]');
-    rate.required=mode==='with';rate.disabled=mode!=='with';rate.closest('label').hidden=mode!=='with';
-    el.querySelector('[data-field="amount"]').readOnly=mode==='legacy';
-  }
-}
-function entries(id){return [...$(id).children].map(el=>{
-  const row=Object.fromEntries([...el.querySelectorAll('[data-field]')].map(i=>[i.dataset.field,i.value]));
-  if(el.dataset.id)row.id=el.dataset.id;
-  row.amount=cents(row.amount);
-  if(id==='payments'){
-    if(row.paymentMode==='legacy'){
-      const original=JSON.parse(el.dataset.original);row.amount=original.amount;
-      el.querySelector('[data-field="amount"]').value=decimal(row.amount);
-      if(original.netAmount!==undefined){row.netAmount=original.netAmount;row.taxAmount=original.taxAmount;}
-      delete row.paymentMode;delete row.ivaRate;
-    }else{
-      row.ivaRate=row.paymentMode==='with'?cents(row.ivaRate):0;
-      Object.assign(row,paymentSplit(row.amount,row.paymentMode,row.ivaRate));
-    }
-    el.querySelector('.payment-breakdown').textContent=row.netAmount===undefined?'Existing payment: allocation pending. Choose with or without IVA to calculate it.':`Net ${money(row.netAmount)} · IVA ${money(row.taxAmount)} · Total ${money(row.amount)}`;
-  }
-  if(id==='lines')row.rate=cents(row.rate);
-  return row;
-});}
-function collect(){return {...Object.fromEntries(['supplier','title','category','status','reference','quoteDate','document','notes'].map(n=>[n,form.elements[n].value])),currency:'EUR',lines:entries('lines'),milestones:entries('milestones'),payments:entries('payments')};}
-function preview(){try{const r=collect(),t=totals(r),scheduled=r.milestones.reduce((n,m)=>n+m.amount,0);$('totals').textContent=`Net ${money(t.net)} · IVA ${money(t.tax)} · Total ${money(t.total)} · Net paid ${money(t.netPaid)} / remaining ${money(t.netBalance)} · IVA paid ${money(t.taxPaid)} / remaining ${money(t.taxBalance)} · Total paid ${money(t.paid)} · ${t.balance<0?'Credit':'Balance'} ${money(Math.abs(t.balance))}${t.unallocatedCount?' · Split pending: component balances are provisional.':''}`+(scheduled>t.total?' · Deadlines exceed the quote total.':'');}catch{$('totals').textContent='Enter valid amounts to calculate totals.';}}
-function open(r){editing=r?structuredClone(r):{id:crypto.randomUUID(),version:0};form.reset();for(const n of ['supplier','title','category','status','reference','quoteDate','document','notes'])form.elements[n].value=r?.[n]||(n==='status'?'quote':'');for(const id of ['lines','milestones','payments'])$(id).innerHTML='';(r?.lines||[{description:'',amount:0,basis:'net',rate:'',taxNote:''}]).forEach(addLine);(r?.milestones||[]).forEach(addMilestone);(r?.payments||[]).forEach(addPayment);dirty=false;$('delete-record').hidden=!r;$('editor-status').textContent='';preview();$('editor').showModal();}
-function close(){if(saving)return;if(dirty&&!confirm('Discard unsaved finance changes?'))return;dirty=false;$('editor').close();}
-form.addEventListener('input',e=>{dirty=true;updatePaymentControls();if(e.target.dataset.field==='label')updateMilestones();preview();});
-$('delete-record').onclick=async()=>{
-  if(saving||!editing?.version)return;
-  if(!confirm(`Permanently delete "${editing.title}" from ${editing.supplier}? This also removes its payments, deadlines and notes. This cannot be undone.`))return;
-  saving=true;const controls=[...form.querySelectorAll('input,select,textarea,button')];controls.forEach(el=>el.disabled=true);
-  try{
-    await api('delete',{id:editing.id,version:editing.version});
-    records=records.filter(r=>r.id!==editing.id);dirty=false;editing=null;$('editor').close();render();$('status').textContent='Quote / contract deleted.';
-  }catch(err){$('editor-status').textContent=err.message;}
-  finally{saving=false;controls.forEach(el=>el.disabled=false);updatePaymentControls();}
-};
-$('close').onclick=close;$('editor').addEventListener('cancel',e=>{e.preventDefault();close();});
-for(const [id,fn] of [['add-line',addLine],['add-milestone',addMilestone],['add-payment',addPayment]])$(id).onclick=()=>{fn();dirty=true;preview();};
-form.onsubmit=async e=>{e.preventDefault();if(saving)return;let record;try{record=validateFinance(collect());}catch{$('editor-status').textContent='Complete required fields and check amounts, dates, IVA rates and document URL (http or https).';return;}saving=true;const controls=[...form.querySelectorAll('input,select,textarea,button')];controls.forEach(el=>el.disabled=true);try{await api('save',{id:editing.id,version:editing.version,record});dirty=false;$('editor').close();$('status').textContent='Finance record saved.';try{await refresh();}catch{$('status').textContent='Saved successfully. Refresh to reload the latest list.';}}catch(err){$('editor-status').textContent=err.message;}finally{saving=false;controls.forEach(el=>el.disabled=false);updatePaymentControls();}};
-$('login-form').onsubmit=async e=>{e.preventDefault();key=$('key').value;$('status').textContent='Loading finances…';try{await refresh();$('key').value='';$('login').hidden=true;$('dashboard').hidden=false;$('status').textContent='';}catch(err){key='';$('status').textContent=err.message;}};
-$('logout').onclick=()=>{key='';records=[];editing=null;dirty=false;calendarSelected=today();calendarMonth=calendarSelected.slice(0,7);form.reset();for(const id of ['rows','stats','upcoming','calendar-days','calendar-events','calendar-month','lines','payments','milestones','totals','editor-status','allocation-note'])$(id).innerHTML='';$('editor').close();$('dashboard').hidden=true;$('login').hidden=false;$('status').textContent='Signed out.';};
-$('add').onclick=()=>open();$('refresh').onclick=()=>refresh().then(()=>$('status').textContent='Updated.').catch(e=>$('status').textContent=e.message);$('search').oninput=render;$('filter').onchange=render;
+$('upcoming-prev').onclick=()=>{upcomingPage--;renderUpcoming();};
+$('upcoming-next').onclick=()=>{upcomingPage++;renderUpcoming();};
+
+function calendar(){const remaining=remainingMonth(state.records,month),complete=monthCompleted(state.records,month);$('month-remaining').classList.toggle('is-complete',complete);$('month-remaining').innerHTML=`<div class="month-summary-head"><h3>${new Date(Number(month.slice(0,4)),Number(month.slice(5))-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</h3><span>${complete?'✓ All paid':remaining.count?remaining.count+' unpaid':'No payments due'}</span></div><div class="month-summary-values"><span>Remaining incl. IVA <strong>${money(remaining.total)}</strong></span><span>Net <b>${money(remaining.net)}</b></span><span>IVA only <b>${money(remaining.tax)}</b></span></div>`;const all=events(state.records),[y,m]=month.split('-').map(Number),first=new Date(y,m-1,1);$('month').textContent=first.toLocaleDateString('en-GB',{month:'long',year:'numeric'});let html=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<span>${d}</span>`).join('')+'<span></span>'.repeat((first.getDay()+6)%7);for(let d=1;d<=new Date(y,m,0).getDate();d++){const date=month+'-'+String(d).padStart(2,'0'),items=all.filter(e=>e.date===date),deadline=items.some(e=>e.kind==='deadline'),paid=items.some(e=>e.kind==='paid');html+=`<button type="button" data-date="${date}" class="${deadline?'deadline ':''}${paid?'paid ':''}${deadline&&paid?'both':''}" aria-label="${date}${deadline?', deadline':''}${paid?', paid':''}" aria-pressed="${selected===date}" ${date===today()?'aria-current="date"':''}>${d}</button>`;}$('days').innerHTML=html;$('days').querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{selected=b.dataset.date;calendar();$('days').querySelector(`[data-date="${selected}"]`).focus();});$('day-events').innerHTML=`<p><strong>${selected}</strong></p>`+(all.filter(e=>e.date===selected).map(e=>`<p class="${e.kind==='paid'?'green':'red'}">${e.kind==='paid'?'Paid':'Deadline'} · ${esc(e.supplier)} · ${esc(e.label)} · ${money(e.amount)} including IVA<br>Net ${money(e.net)} · IVA only ${money(e.tax)}</p>`).join('')||'<p>No payments or deadlines on this day.</p>');}
+function move(delta){const [y,m]=month.split('-').map(Number),d=new Date(y,m-1+delta,1);month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;selected=month+'-01';calendar();}
+$('prev').onclick=()=>move(-1);$('next').onclick=()=>move(1);$('today').onclick=()=>{selected=today();month=selected.slice(0,7);calendar();};$('search').oninput=()=>state&&render();
+function newItem(){return {id:crypto.randomUUID(),description:'',amount:0,basis:'gross',rate:0,taxNote:'',deadline:'',paid:false,paidDate:''};}
+function open(r){editing=r?structuredClone(r):{id:crypto.randomUUID(),version:0,schemaVersion:2,currency:'EUR',reference:'',quoteDate:'',document:'',supplier:'',title:'',category:'Other',status:'contracted',notes:'',items:[newItem()]};for(const name of ['supplier','title','status','notes','category','reference','quoteDate','document'])form.elements[name].value=editing[name]??'';form.elements.status.value=effectiveStatus(editing)==='quote'?'quote':'contracted';$('editor-title').textContent=r?r.supplier:'New supplier';$('error').textContent='';renderItems();$('delete-supplier').hidden=!r;dirty=false;$('editor').showModal();}
+function renderItems(){const field=(label,name,value,type='text',extra='')=>`<label>${label}<input data-field="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;$('items').innerHTML=editing.items.map((i,n)=>`<section class="item" data-item="${n}"><div class="item-fields">${field('Description','description',i.description,'text','required maxlength="200"')}${field('Item amount (€)','amount',decimal(i.amount),'number','required min="0" max="99999999.99" step="0.01"')}<label>Amount is<select data-field="basis"><option value="gross" ${i.basis==='gross'?'selected':''}>After IVA</option><option value="net" ${i.basis==='net'?'selected':''}>Before IVA</option></select></label>${field('IVA rate (%)','rate',decimal(i.rate),'number','required min="0" max="100" step="0.01"')}${field('Deadline','deadline',i.deadline,'date')}</div><div class="item-bottom"><label class="check"><input data-field="paid" type="checkbox" ${i.paid?'checked':''}>Paid</label><label class="paid-date" ${!i.paid?'hidden':''}>Date paid<input data-field="paidDate" type="date" value="${esc(i.paidDate)}" ${i.paid?'required':''}></label><span class="item-amount"></span><button type="button" class="secondary remove">Remove</button></div></section>`).join('');$('items').querySelectorAll('[data-item]').forEach(el=>{const i=editing.items[Number(el.dataset.item)];el.querySelector('.remove')?.addEventListener('click',()=>{try{readItems();}catch{$('error').textContent='Check item amounts before removing an item.';return;}editing.items.splice(Number(el.dataset.item),1);dirty=true;renderItems();});});updateTotals();}
+function readItems(){for(const el of $('items').children){const item=editing.items[Number(el.dataset.item)];for(const input of el.querySelectorAll('[data-field]')){const k=input.dataset.field;item[k]=k==='paid'?input.checked:['amount','rate'].includes(k)?cents(input.value):input.value;}}}
+function updateTotals(){try{readItems();const t=summary(editing);$('completion-note').textContent=form.elements.status.value==='quote'?'Provisional quote · excluded from booked totals.':effectiveStatus({...editing,status:'contracted'})==='completed'?'✓ Completed · All items are paid.':'Completion is automatic when every item is marked paid.';$('item-totals').innerHTML=`<div class="net-total">Before IVA<strong>${money(t.net)}</strong></div><div class="iva-total">IVA<strong>${money(t.tax)}</strong></div><div class="gross-total">Including IVA<strong>${money(t.total)}</strong></div><small>Paid including IVA ${money(t.paid)} · Net ${money(t.netPaid)} · IVA ${money(t.taxPaid)}<br>Remaining including IVA ${money(t.balance)} · Net ${money(t.netBalance)} · IVA ${money(t.taxBalance)}</small>`;$('items').querySelectorAll('[data-item]').forEach(el=>{const i=editing.items[Number(el.dataset.item)],t=lineTotals(i);el.classList.toggle('item-paid',i.paid);el.querySelector('.item-amount').innerHTML=`${money(t.total)} including IVA${breakdown(t.net,t.tax)}`;});}catch{$('item-totals').textContent='Enter valid amounts to see the totals.';}}
+$('items').addEventListener('input',e=>{dirty=true;if(e.target.dataset.field==='paid'){const el=e.target.closest('.item'),paidDate=el.querySelector('[data-field="paidDate"]');el.querySelector('.paid-date').hidden=!e.target.checked;paidDate.required=e.target.checked;if(e.target.checked&&!paidDate.value)paidDate.value=today();}updateTotals();});
+form.addEventListener('input',()=>{dirty=true;updateTotals();});
+$('add-item').onclick=()=>{try{readItems();editing.items.push(newItem());dirty=true;renderItems();$('items').lastElementChild.querySelector('input').focus();}catch{$('error').textContent='Complete the current item amounts before adding another.';}};
+function close(){if(saving)return;if(dirty&&!confirm('Discard your unsaved changes?'))return;$('editor').close();dirty=false;}
+$('close').onclick=close;$('editor').addEventListener('cancel',e=>{e.preventDefault();close();});$('add').onclick=()=>state&&open();
+function lockForm(locked){saving=locked;form.querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=locked);}
+form.onsubmit=async e=>{e.preventDefault();if(saving)return;try{readItems();for(const n of ['supplier','title','status','notes','category','reference','quoteDate','document'])editing[n]=form.elements[n].value;const record=validateItems({...editing,currency:'EUR',schemaVersion:2});lockForm(true);const result=await api('save',{id:editing.id,version:editing.version||0,record});const saved={...record,id:editing.id,version:result.version};const index=state.records.findIndex(r=>r.id===saved.id);if(index<0)state.records.unshift(saved);else state.records[index]=saved;dirty=false;$('editor').close();render();$('status').textContent='Supplier saved.';}catch(e){$('error').textContent=e.message==='INVALID'?'Check the required fields, dates, amounts and document link.':e.message;}finally{lockForm(false);}};
+$('delete-supplier').onclick=async()=>{if(saving||!editing?.version)return;if(!confirm(`Delete ${editing.supplier} — ${editing.title}? This removes this supplier record and its items permanently.`))return;try{lockForm(true);await api('delete',{id:editing.id,version:editing.version});state.records=state.records.filter(r=>r.id!==editing.id);dirty=false;$('editor').close();render();$('status').textContent='Supplier deleted.';}catch(e){$('error').textContent=e.message;}finally{lockForm(false);}};
+$('login-form').onsubmit=async e=>{e.preventDefault();key=$('key').value;$('login-status').textContent='Loading…';const button=$('login-form').querySelector('button');button.disabled=true;try{await load();$('key').value='';$('login').hidden=true;$('dashboard').hidden=false;$('login-status').textContent='';}catch(e){key='';$('login-status').textContent=e.message;}finally{button.disabled=false;}};
+$('refresh').onclick=async()=>{try{await load();$('status').textContent='Updated.';}catch(e){$('status').textContent=e.message;}};
+$('logout').onclick=()=>{if(saving)return;if(dirty&&!confirm('Discard unsaved changes and sign out?'))return;key='';state=null;editing=null;dirty=false;upcomingPage=0;selected=today();month=selected.slice(0,7);form.reset();$('search').value='';for(const id of ['suppliers','stats','upcoming','upcoming-page','days','day-events','month-remaining','items','item-totals','error','status','completion-note','editor-title'])$(id).innerHTML='';$('editor').close();$('dashboard').hidden=true;$('login').hidden=false;};
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
-function csv(name,fields,rows){const cell=v=>'"'+(/^[\s]*[=+\-@]/.test(String(v??''))?"'":'')+String(v??'').replace(/"/g,'""')+'"';const data='\uFEFF'+[fields,...rows].map(row=>row.map(cell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-$('export').onclick=()=>{
-  if($('export-kind').value==='contracts')csv('wedding-contracts',['ID','Supplier','Title','Category','Status','Currency','Reference','Quote date','Net','IVA','Total','Paid','Balance','Net paid','IVA paid','Net balance','IVA balance','Unallocated paid','Unallocated entries','Document','Notes'],records.map(r=>{const t=totals(r);return [r.id,r.supplier,r.title,r.category,r.status,'EUR',r.reference,r.quoteDate,...['net','tax','total','paid','balance','netPaid','taxPaid','netBalance','taxBalance','unallocatedPaid'].map(k=>decimal(t[k])),t.unallocatedCount,r.document,r.notes];}));
-  if($('export-kind').value==='items')csv('wedding-quote-items',['Contract ID','Supplier','Description','Input amount','Basis','IVA %','Net','IVA','Total','Tax note'],records.flatMap(r=>r.lines.map(l=>{const t=lineTotals(l);return [r.id,r.supplier,l.description,decimal(l.amount),l.basis,decimal(l.rate),decimal(t.net),decimal(t.tax),decimal(t.total),l.taxNote];})));
-  if($('export-kind').value==='payments')csv('wedding-payments',['Contract ID','Supplier','Date','Type','Amount EUR','Net EUR','IVA EUR','Allocation','Payment IVA mode','Payment IVA rate %','Method','Reference','Deadline'],records.flatMap(r=>r.payments.map(p=>[r.id,r.supplier,p.date,p.kind,decimal(p.amount),p.netAmount===undefined?'':decimal(p.netAmount),p.taxAmount===undefined?'':decimal(p.taxAmount),p.netAmount===undefined?'Split pending':'Allocated',p.paymentMode||'Legacy',p.ivaRate===undefined?'':decimal(p.ivaRate),p.method,p.reference,r.milestones.find(m=>m.id===p.milestone)?.label||'Unassigned'])));
-  if($('export-kind').value==='deadlines')csv('wedding-deadlines',['Contract ID','Supplier','Label','Date','Amount EUR','Unpaid EUR'],records.flatMap(r=>r.milestones.map(m=>[r.id,r.supplier,m.label,m.date,decimal(m.amount),decimal(dueAmount(r,m))])));
-};
-if(!window.RSVP_API_URL){$('login-form').hidden=true;$('status').textContent='The management API is not configured.';}

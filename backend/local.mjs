@@ -22,7 +22,7 @@ const DB = { prepare(sql) { return { bind(...args) { return {
 }; } }; } };
 const publicFiles=new Set(['index.html','styles.css','day.css','day.js','app.js','rsvp.css','rsvp.js','rsvp-config.js','assets/couple.jpeg','assets/church.jpg','assets/villa.jpg']);
 for(const file of ['admin.html','admin.js','admin.css','guest-fields.js'])publicFiles.add(file);
-for(const file of ['finance.html','finance.js','finance.css','finance-model.mjs'])publicFiles.add(file);
+for(const file of ['finance.html','finance.js','finance.css','finance-model.mjs','finance-items.mjs'])publicFiles.add(file);
 const server=http.createServer(async(req,res)=>{
   try {
     const url=new URL(req.url,'http://127.0.0.1:4173');
