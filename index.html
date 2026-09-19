@@ -3,31 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#542735">
+  <meta name="theme-color" content="#faf7f0">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Chiara &amp; Yago · 03.07.2027">
+  <meta property="og:description" content="Chiara &amp; Yago · Roma · 03.07.2027">
+  <meta property="og:image" content="https://yagriver.github.io/wedding_master/assets/identity/social-preview.png">
+  <meta property="og:image:alt" content="Chiara &amp; Yago · 03.07.2027 · Roma">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/identity/favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="assets/identity/favicon-32.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/identity/apple-touch-icon.png">
   <meta name="description" content="Chiara & Yago — nuestra boda en Roma, 3 de julio de 2027. Lugares, alojamiento y RSVP.">
   <title>Chiara & Yago · 03.07.2027</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="day.css">
   <script defer src="day.js"></script>
   <link rel="stylesheet" href="rsvp.css">
+  <link rel="stylesheet" href="wedding-theme.css">
   <script defer src="rsvp-config.js"></script>
   <script defer src="guest-fields.js"></script>
   <script defer src="rsvp.js"></script>
   <script defer src="app.js"></script>
 </head>
-<body>
+<body class="wedding-site">
   <a class="skip" href="#main" data-text="skip">Ir al contenido</a>
   <header>
-    <a class="monogram" href="#home" aria-label="Chiara & Yago">C<span>&</span>Y<span class="brand-date">03 · 07 · 2027</span></a>
+    <a class="monogram" href="#home" aria-label="Chiara & Yago"><img class="brand-mark" src="assets/identity/cy-monogram.svg" alt="" width="100" height="82"><span class="brand-date">03 · 07 · 2027</span></a>
     <nav aria-label="Navegación" id="navigation"></nav>
     <div class="languages" role="group" aria-label="Language">
-      <button data-lang="es" lang="es" aria-pressed="true"><span class="flag flag-es" aria-hidden="true"></span>Español</button>
-      <button data-lang="it" lang="it" aria-pressed="false"><span class="flag flag-it" aria-hidden="true"></span>Italiano</button>
-      <button data-lang="en" lang="en" aria-pressed="false"><span class="flag flag-en" aria-hidden="true"></span>English</button>
+      <button data-lang="es" aria-label="Español" title="Español" lang="es" aria-pressed="true"><span class="flag flag-es" aria-hidden="true"></span><span class="language-full">Español</span><span class="language-short" aria-hidden="true">ES</span></button>
+      <button data-lang="it" aria-label="Italiano" title="Italiano" lang="it" aria-pressed="false"><span class="flag flag-it" aria-hidden="true"></span><span class="language-full">Italiano</span><span class="language-short" aria-hidden="true">IT</span></button>
+      <button data-lang="en" aria-label="English" title="English" lang="en" aria-pressed="false"><span class="flag flag-en" aria-hidden="true"></span><span class="language-full">English</span><span class="language-short" aria-hidden="true">EN</span></button>
     </div>
   </header>
   <main id="main" tabindex="-1"></main>
   <noscript><p class="notice">Activa JavaScript para ver la web. / Attiva JavaScript per visualizzare il sito. / Please enable JavaScript to view this website.</p></noscript>
-  <footer><a href="#home">Chiara & Yago</a><span data-text="footer">Roma, con vosotros.</span><span>03 · 07 · 2027</span></footer>
+  <footer><a class="footer-brand" href="#home"><img src="assets/identity/cy-monogram.svg" alt="" width="100" height="82">Chiara & Yago</a><span data-text="footer">Roma, con vosotros.</span><span>03 · 07 · 2027</span></footer>
 </body>
 </html>
