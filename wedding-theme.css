@@ -101,10 +101,16 @@
 .wedding-site .hero h1 em { display: inline; padding: 0 4px; font-size: .85em; }
 .wedding-site .hero .city { font-size: 13px; letter-spacing: 1px; margin: 12px 0 0; }
 .wedding-site .hero .intro { margin: 18px auto 24px; max-width: 345px; font-size: 15px; }
-.wedding-site .hero-photo { isolation: isolate; }
-.wedding-site .hero-photo::before { content: ''; position: absolute; inset: -10px 10px 32px -10px; border: 1px solid #a6b0a0; border-radius: 250px 250px 4px 4px; z-index: -1; }
-.wedding-site .hero-photo img { height: 565px; border-radius: 250px 250px 3px 3px; }
-.wedding-site .hero-photo figcaption { font-size: 10px; letter-spacing: 1.8px; margin-top: 19px; }
+.wedding-site .hero-photo {
+  isolation: isolate;
+  padding: 14px 14px 28px;
+  background: #fffdf8;
+  border: 1px solid #e7e2d7;
+  box-shadow: 0 18px 36px -20px rgb(45 48 37 / 30%), 0 3px 8px rgb(45 48 37 / 5%);
+  rotate: -1.5deg;
+  margin-block: 12px;
+}
+.wedding-site .hero-photo img { height: 565px; border-radius: 0; }
 .wedding-site .hero-copy { isolation: isolate; }
 .wedding-site .button { min-height: 46px; padding: 12px 23px; border-radius: 2px; letter-spacing: .15px; }
 .wedding-site .button:hover { background: #40533b; border-color: #40533b; color: #fff; }
@@ -137,7 +143,7 @@
   .wedding-site .hero h1 { font-size: 33px; }
   .wedding-site .hero .intro { max-width: 320px; }
   .wedding-site .hero-photo img { height: 430px; }
-  .wedding-site .hero-photo::before { inset: -8px 8px 29px -8px; }
+  .wedding-site .hero-photo { padding: 10px 10px 22px; rotate: -1deg; margin-block: 10px; }
   .wedding-site .home-details { padding: 0; }
   .wedding-site footer { gap: 13px; }
   .wedding-site .footer-brand { font-size: 19px; gap: 11px; }
@@ -238,4 +244,76 @@
   .wedding-site .hero { margin-bottom:16px; }
   .wedding-site .floral-divider { gap:12px; padding:0 24px; margin-bottom:8px; }
   .wedding-site .floral-divider img { width:230px; }
+}
+
+/* A photographic pause: preserve the couple at the bottom of the original. */
+.wedding-site .photo-moment {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  margin:0;
+  height:clamp(560px, 58vw, 820px);
+  background:#626a67;
+}
+.wedding-site .photo-moment-image {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:50% 100%;
+}
+.wedding-site .photo-moment::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg, rgb(17 29 33 / 52%), rgb(17 29 33 / 12%) 48%, transparent 70%);
+  pointer-events:none;
+}
+.wedding-site .photo-moment-copy {
+  position:relative;
+  z-index:1;
+  padding:clamp(54px, 6vw, 88px) 24px 0;
+  max-width:860px;
+  margin:auto;
+  text-align:center;
+  color:#fffdf7;
+}
+.wedding-site .photo-moment-copy .eyebrow {
+  color:inherit;
+  font-size:14px;
+  letter-spacing:3px;
+  margin:0 0 16px;
+}
+.wedding-site .photo-moment-copy h2 {
+  color:inherit;
+  font-size:clamp(40px, 5vw, 68px);
+  line-height:1.08;
+  text-wrap:balance;
+  margin:0;
+  text-shadow:0 2px 20px rgb(0 0 0 / 16%);
+}
+.wedding-site .scroll-reveal {
+  transition:opacity 800ms ease var(--reveal-delay, 0ms), transform 800ms cubic-bezier(.2,.7,.2,1) var(--reveal-delay, 0ms);
+}
+.wedding-site .reveal-pending { opacity:0; transform:translateY(24px); }
+.wedding-site .reveal-visible { opacity:1; transform:none; }
+.wedding-site .day-timeline .scroll-reveal::before {
+  transform-origin:top;
+  transition:transform 900ms ease 180ms;
+}
+.wedding-site .day-timeline .reveal-pending::before { transform:scaleY(0); }
+@media(max-width:650px) {
+  .wedding-site .photo-moment { height:580px; }
+  .wedding-site .photo-moment-image { object-position:50% 100%; }
+  .wedding-site .photo-moment-copy { padding-top:48px; }
+  .wedding-site .photo-moment-copy h2 { font-size:42px; }
+  .wedding-site .scroll-reveal { --reveal-delay:0ms !important; }
+  .wedding-site .reveal-pending { transform:translateY(16px); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .wedding-site .scroll-reveal,
+  .wedding-site .day-timeline .scroll-reveal::before { transition:none; }
+  .wedding-site .reveal-pending { opacity:1; transform:none; }
+  .wedding-site .day-timeline .reveal-pending::before { transform:none; }
 }
