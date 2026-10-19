@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS guest_management (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  payload TEXT NOT NULL,
+  version INTEGER NOT NULL DEFAULT 1
+);

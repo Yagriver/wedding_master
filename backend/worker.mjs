@@ -42,13 +42,14 @@ export async function handle(request,env) {
   const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
   if(request.method==='OPTIONS') return new Response(null,{status:204,headers});
   const route=new URL(request.url).pathname.replace(/^\/api/,'');
-  if(!['/lookup','/save','/admin/list','/admin/plan','/admin/finance/list','/admin/finance/save','/admin/finance/delete'].includes(route)) return reply({error:'NOT_FOUND'},404);
+  if(!['/lookup','/save','/admin/guests/list','/admin/guests/save','/admin/list','/admin/plan','/admin/finance/list','/admin/finance/save','/admin/finance/delete'].includes(route)) return reply({error:'NOT_FOUND'},404);
   if(request.method!=='POST') return reply({error:'METHOD'},405);
   if(!request.headers.get('Content-Type')?.startsWith('application/json')) return reply({error:'INVALID'},415);
   try {
-    if(Number(request.headers.get('Content-Length'))>24000) return reply({error:'INVALID'},413);
+    const maxBody=route.startsWith('/admin/guests/')?1500000:24000;
+    if(Number(request.headers.get('Content-Length'))>maxBody) return reply({error:'INVALID'},413);
     const raw=await request.text();
-    if(raw.length>24000) return reply({error:'INVALID'},413);
+    if(raw.length>maxBody) return reply({error:'INVALID'},413);
     let body; try {body=JSON.parse(raw);} catch {return reply({error:'INVALID'},400);}
     if(!body || typeof body!=='object' || Array.isArray(body)) return reply({error:'INVALID'},400);
     if(route.startsWith('/admin/'))return await admin(request,env,route,body,reply);

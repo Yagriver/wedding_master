@@ -1,4 +1,5 @@
 import {finance} from './finance.mjs';
+import {guests} from './guests.mjs';
 async function authorized(request,env) {
   if(!env.ADMIN_PASSWORD || env.ADMIN_PASSWORD.length<24)return false;
   const received=request.headers.get('Authorization')||'';
@@ -8,6 +9,7 @@ async function authorized(request,env) {
 }
 export async function admin(request,env,route,body,reply){
   if(!await authorized(request,env))return reply({error:'UNAUTHORIZED'},401);
+  if(route.startsWith('/admin/guests/'))return guests(env,route,body,reply);
   if(route.startsWith('/admin/finance/'))return finance(env,route,body,reply);
   if(route==='/admin/list'){
     const responses=await env.DB.prepare('SELECT lookup_key,payload,version,updated_at FROM responses').bind().all();

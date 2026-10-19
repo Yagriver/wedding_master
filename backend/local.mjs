@@ -12,6 +12,7 @@ const db=new DatabaseSync(path.join(dataDir,'rsvp.sqlite'));
 db.exec(fs.readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));
 db.exec(fs.readFileSync(new URL('./migrations/002_planning.sql',import.meta.url),'utf8'));
 db.exec(fs.readFileSync(new URL('./migrations/003_finances.sql',import.meta.url),'utf8'));
+db.exec(fs.readFileSync(new URL('./migrations/004_guests.sql',import.meta.url),'utf8'));
 const passwordFile=path.join(dataDir,'admin-key.txt');
 if(!fs.existsSync(passwordFile))fs.writeFileSync(passwordFile,randomBytes(32).toString('hex'),{mode:0o600});
 const ADMIN_PASSWORD=fs.readFileSync(passwordFile,'utf8').trim();
@@ -21,14 +22,14 @@ const DB = { prepare(sql) { return { bind(...args) { return {
   run: async () => ({meta: {changes: Number(db.prepare(sql).run(...args).changes)}})
 }; } }; } };
 const publicFiles=new Set(['index.html','styles.css','day.css','day.js','app.js','rsvp.css','rsvp.js','rsvp-config.js','assets/couple.jpeg','assets/church.jpg','assets/villa.jpg']);
-for(const file of ['admin.html','admin.js','admin.css','guest-fields.js'])publicFiles.add(file);
+for(const file of ['admin.html','admin.js','admin.css','guest-fields.js','guest-model.mjs'])publicFiles.add(file);
 for(const file of ['finance.html','finance.js','finance.css','finance-model.mjs','finance-items.mjs'])publicFiles.add(file);
 const server=http.createServer(async(req,res)=>{
   try {
     const url=new URL(req.url,'http://127.0.0.1:4173');
     if(url.pathname.startsWith('/api/')) {
       let size=0;const chunks=[];
-      for await(const chunk of req){size+=chunk.length;if(size>24000){res.writeHead(413);res.end();return;}chunks.push(chunk);}
+      for await(const chunk of req){size+=chunk.length;if(size>1500000){res.writeHead(413);res.end();return;}chunks.push(chunk);}
       const request=new Request(url,{method:req.method,headers:req.headers,...(!['GET','HEAD'].includes(req.method)?{body:Buffer.concat(chunks)}:{})});
       const response=await handle(request,{DB,ADMIN_PASSWORD,ALLOWED_ORIGINS:'http://127.0.0.1:4173,http://localhost:4173'});
       res.writeHead(response.status,Object.fromEntries(response.headers));res.end(await response.text());return;
