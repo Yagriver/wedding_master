@@ -31,7 +31,7 @@ function render(){
   const heading=(title,intro)=>`<div class="page-heading"><p class="eyebrow">${t.city} · 03.07.2027</p><h1>${title}</h1><p>${intro}</p></div>`;
   let content='';
   if(page==='home') content=`<section class="hero"><div class="hero-copy"><p class="eyebrow">${t.marry}</p><img class="hero-identity" src="assets/identity/cy-invitation.svg" alt="" width="100" height="103"><p class="visually-hidden"><span lang="en">See you on</span> ${t.date}</p><h1>Chiara <em>&</em> Yago</h1><p class="city">${t.city}</p><p class="intro">${t.intro}</p><div class="hero-actions">${window.RSVP_API_URL?`<a class="button" href="#rsvp">${actions.reply}</a><a class="text-link" href="#locations">${t.discover} →</a>`:`<a class="button" href="#locations">${t.discover}</a>`}</div></div><figure class="hero-photo"><img src="assets/couple.jpeg" alt="Chiara & Yago" width="3840" height="5120" fetchpriority="high"></figure></section><div class="floral-divider" aria-hidden="true"><span></span><img src="assets/identity/white-botanical.webp?v=horizontal" alt=""><span></span></div><section class="home-details"><article><p class="eyebrow">01 · ${t.ceremony}</p><h2>Sant’Anselmo</h2><p>Aventino · ${t.city}</p><a class="text-link" href="#locations">${t.more} →</a></article><article><p class="eyebrow">02 · ${t.reception}</p><h2>Villa Demetra</h2><p>${t.city}</p><a class="text-link" href="#locations">${t.more} →</a></article><article><p class="eyebrow">03 · ${t.weekend}</p><h2>${t.city}</h2><p>${t.stayShort}</p><a class="text-link" href="#accommodation">${t.hotels} →</a></article></section><aside class="guest-updates"><p>${actions.updates}</p><a class="text-link" href="#wedding-day">${actions.programme} →</a></aside>`;
-  if(page==='accommodation') content=`<section class="page">${heading(t.stayTitle,t.stayIntro)}<div class="stay"><div><span class="status">${t.soon}</span><h2>${t.stayHeading}</h2><p>${t.stayText}</p><a class="text-link" href="#locations">${t.discover} →</a></div><aside><h3>${t.stayAside}</h3><p>${t.stayAdvice}</p><p class="note">${t.stayLocation}</p></aside></div></section>`;
+  if(page==='accommodation') content=window.WeddingAccommodation.render(language,heading);
   if(page==='rsvp') content=`<section class="page">${heading(t.rsvpTitle,t.rsvpIntro)}<p class="notice">${t.closed}</p><div class="rsvp-card"><h2>${t.how}</h2><ol class="steps">${t.steps.map(([title,body])=>`<li><div><strong>${title}</strong><p>${body}</p></div></li>`).join('')}</ol><details><summary>${t.questions}</summary><ul>${t.fields.map(f=>`<li>${f}</li>`).join('')}</ul><p class="note">${t.planned}</p></details></div></section>`;
   if(page==='wedding-day') {
     const day=dayCopy[language];
@@ -48,6 +48,7 @@ function render(){
   }
   if(page==='locations') content=window.WeddingLocations.render(t,language,heading);
   document.querySelector('#main').innerHTML=content;
+  window.WeddingAccommodation.init(document.querySelector('#main'),language);
   window.WeddingLocations.init(document.querySelector('#main'),language,t);
   window.initWeddingMotion?.(document.querySelector('#main'));
   if(page==='rsvp')bindRsvp();
