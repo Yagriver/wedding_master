@@ -1,0 +1,85 @@
+/* Original envelope artwork is preserved intact; the letter uses a centred couple vignette. */
+.wedding-site .envelope-theatre{padding:25% 8% 9%;perspective:1800px;overflow:visible;max-height:none;transition:none}
+.wedding-site .envelope-body{aspect-ratio:1.9;isolation:isolate;background:#ad7f79;border:1px solid #aa7c76;border-radius:2px;box-shadow:0 22px 38px -22px #66453f80,0 3px 5px #66453f20;transform:none;opacity:1}
+.wedding-site .envelope-body:after,.wedding-site .envelope-fold:after,.wedding-site .envelope-pocket:after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.13;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.6' d='M0 0h180v180H0z'/%3E%3C/svg%3E")}
+.wedding-site .envelope-lining{inset:1px;background:repeating-linear-gradient(45deg,#eee1d0 0px,#eee1d0 9px,#e9dbca 10px,#eee1d0 11px);border:7px solid #b48a80}
+.wedding-site .envelope-pocket{background:linear-gradient(148deg,transparent 49.7%,#986a6533 49.9%,transparent 50.4%),linear-gradient(32deg,#bb8c83 49.7%,#c1978d 50%);clip-path:polygon(0 0,50% 58%,100% 0,100% 100%,0 100%);border-color:#ae7d74}
+.wedding-site .envelope-fold{clip-path:polygon(0 0,100% 0,100% 17%,52% 67%,48% 67%,0 17%);background:linear-gradient(175deg,#c99f95,#ba8a82 75%);filter:drop-shadow(0 3px 2px #63413c35);transform-origin:50% 0;backface-visibility:hidden}
+.wedding-site .flap-monogram{position:absolute;width:18%;height:22%;object-fit:contain;left:36%;top:20%;opacity:.36;filter:sepia(1) drop-shadow(0 1px 0 #f7d3bd)}
+.wedding-site .flap-date{position:absolute;left:36%;width:18%;top:45%;font:italic clamp(9px,1.2vw,13px) Georgia,serif;letter-spacing:2px;color:#95675f;text-shadow:0 1px #dbb5a5}
+.wedding-site .envelope-ribbon{left:60%;top:-8%;width:32%;height:125%;bottom:auto;background:none;border:0;opacity:1;transform:none;filter:drop-shadow(1px 3px 2px #56393730)}
+.wedding-site .envelope-ribbon img{width:100%;height:100%;object-fit:fill}
+.wedding-site .envelope-sprig{width:15%;right:16%;top:-3%;transform:rotate(7deg);filter:drop-shadow(1px 2px 1px #553a3825)}
+.wedding-site .envelope-wax{width:14%;left:49%;top:72%;border-radius:47% 49% 44% 50%;border:3px solid #c69d50;background:radial-gradient(ellipse at 28% 20%,#f5dda2,#d8ae5d 42%,#b77f2d 80%,#e4be70);box-shadow:0 5px 6px #63412d44,inset 0 0 0 2px #efcf87,inset 0 0 0 5px #b88538,inset 0 0 0 6px #edcc82}
+.wedding-site .envelope-wax:before{content:'';position:absolute;left:40%;bottom:90%;width:150%;height:70%;border:1px solid #b99043;border-radius:50%;transform:rotate(-25deg);z-index:-1}
+.wedding-site .envelope-wax img{width:68%;opacity:.55;filter:sepia(1) drop-shadow(0 1px #ffe1a1)}
+.wedding-site .envelope-peek{inset:5% 6% 6%;display:block;background:#fcf7ec;box-shadow:0 0 0 5px #fcf7ec,0 0 0 6px #d3c3a6;border:1px solid #d9ccb4;overflow:hidden}
+.wedding-site .envelope-peek .peek-garden{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:.8}
+.wedding-site .envelope-peek .peek-monogram{position:absolute;left:43%;top:7%;width:14%;height:22%;object-fit:contain;opacity:.6}
+.wedding-site .envelope-peek>span{position:absolute;left:0;right:0;top:33%;font:8px Georgia,serif;letter-spacing:2px;color:#8d806b}
+.wedding-site .is-open .envelope-wax{animation:stationery-seal 1.1s cubic-bezier(.4,0,.2,1) both}
+.wedding-site .is-open .envelope-ribbon,.wedding-site .is-open .envelope-sprig{animation:stationery-silk 1.5s .2s cubic-bezier(.4,0,.2,1) both}
+.wedding-site .is-open .envelope-fold{animation:stationery-flap 1.6s .7s cubic-bezier(.4,0,.2,1) forwards}
+.wedding-site .is-open .envelope-peek{animation:stationery-card 1.8s 1.5s cubic-bezier(.22,1,.36,1) forwards}
+.wedding-site .letter-revealed .envelope-theatre{padding:25% 8% 9%;max-height:none;overflow:visible;transition:none}
+.wedding-site .letter-revealed .envelope-body{transform:none;opacity:1}
+.wedding-site .honeymoon-reveal{animation:stationery-letter 1.5s cubic-bezier(.22,1,.36,1) both}
+.wedding-site .honeymoon-reveal .letter-paper{padding-top:36px;background:#fcf7ec;box-shadow:0 22px 65px -35px #75574c65;border-color:#dfd1ba}
+.wedding-site .letter-paper:before{inset:10px;border-color:#c9b18a50}
+.wedding-site .letter-monogram{width:85px;margin:0 auto 12px;opacity:.68}
+.wedding-site .letter-date{text-align:center;font-size:9px;letter-spacing:2.4px;color:#928269}
+.wedding-site .letter-date span{margin:0 8px;color:#b99259}
+.wedding-site .letter-garden{display:block;width:calc(100% + 56px);max-width:none;height:auto;margin:12px -28px 24px;opacity:.9}
+.wedding-site .paper-sprig{width:50px;height:85px;opacity:.45}
+.wedding-site .letter-paper .letter-greeting{text-align:center;font-size:28px}
+.wedding-site .letter-paper .letter-signoff{text-align:center;padding:14px 0 8px}
+.wedding-site .honeymoon-reveal .honeymoon-bank{background:linear-gradient(#f2e8dc,#f8f0e4);border-top:1px solid #d9c7aa}
+@keyframes stationery-seal{0%,15%{opacity:1;transform:translate(-50%,-50%) rotate(0)}60%{opacity:1;transform:translate(-50%,-42%) rotate(-12deg)}100%{opacity:0;transform:translate(-70%,10%) rotate(-18deg)}}
+@keyframes stationery-silk{0%{opacity:1;translate:0 0;rotate:0deg}65%{opacity:.85}100%{opacity:0;translate:50px 25px;rotate:12deg}}
+@keyframes stationery-flap{0%{transform:rotateX(0deg);z-index:5}49%{z-index:5}50%,100%{z-index:1}100%{transform:rotateX(174deg)}}
+@keyframes stationery-card{0%{transform:translateY(0)}100%{transform:translateY(-56%) rotate(-1deg);box-shadow:0 7px 16px #6a4f3c18}}
+@keyframes stationery-letter{from{opacity:0;transform:translateY(-25px)}to{opacity:1;transform:none}}
+.wedding-site .envelope-ribbon{left:53%;top:-8%;width:43%;height:132%;filter:drop-shadow(0 4px 3px #66453f20)}
+.wedding-site .envelope-ribbon img{object-fit:contain}
+.wedding-site .envelope-body{background:#b38680}
+.wedding-site .envelope-fold{background:linear-gradient(170deg,#c49a94,#b1847f 85%)}
+.wedding-site .envelope-pocket{background:linear-gradient(148deg,transparent 49.7%,#986a6522 49.9%,transparent 50.4%),linear-gradient(32deg,#b98d86 49.7%,#c0978f 50%)}
+.wedding-site .envelope-wax{left:48%;top:76%;width:13%}
+.wedding-site .envelope-peek .peek-garden{object-fit:cover;opacity:1}
+.wedding-site .envelope-peek .peek-monogram{left:42%;top:24%;width:16%;height:32%}
+.wedding-site .envelope-peek>span{top:64%;font-size:7px}
+.wedding-site .honeymoon-reveal .letter-paper{padding-top:12px;overflow:hidden}
+.wedding-site .letter-artwork{position:relative;margin:0 -36px 32px;aspect-ratio:3/1;isolation:isolate}
+.wedding-site .letter-artwork .letter-garden{position:absolute;inset:0;width:100%;height:100%;margin:0;object-fit:cover;opacity:1;z-index:-1;mask-image:linear-gradient(#000 88%,transparent)}
+.wedding-site .letter-artwork .letter-monogram{position:absolute;width:15%;height:38%;object-fit:contain;left:42.5%;top:20%;margin:0;opacity:.78}
+.wedding-site .letter-artwork .letter-date{position:absolute;left:33%;width:34%;top:66%;font-size:7px;letter-spacing:1.4px;white-space:nowrap}
+.wedding-site .letter-artwork .letter-date span{margin:0 4px}
+.wedding-site .letter-paper>p:not(.letter-greeting):not(.letter-signoff){font-size:17px;line-height:1.9;color:#655d53}
+.wedding-site .letter-paper .letter-greeting{margin-bottom:25px;color:#795d55}
+@media(max-width:600px){.wedding-site .letter-artwork{margin-inline:-19px;margin-bottom:22px;aspect-ratio:2.7/1}.wedding-site .letter-artwork .letter-date{font-size:5px;letter-spacing:.6px;left:30%;width:40%}.wedding-site .letter-paper>p:not(.letter-greeting):not(.letter-signoff){font-size:16px}}
+@media(max-width:600px){.wedding-site .envelope-theatre,.wedding-site .letter-revealed .envelope-theatre{padding:27% 3% 10%}.wedding-site .flap-date{font-size:8px;letter-spacing:1px}.wedding-site .envelope-peek>span{font-size:6px}.wedding-site .letter-garden{width:calc(100% + 24px);margin-inline:-12px}.wedding-site .letter-paper .letter-greeting{font-size:24px}.wedding-site .letter-date{font-size:8px;letter-spacing:1.8px}.wedding-site .envelope-wax{border-width:2px}}
+@media(prefers-reduced-motion:reduce){.wedding-site .is-open .envelope-wax,.wedding-site .is-open .envelope-ribbon,.wedding-site .is-open .envelope-sprig,.wedding-site .is-open .envelope-fold,.wedding-site .is-open .envelope-peek,.wedding-site .honeymoon-reveal{animation:none}.wedding-site .is-open .envelope-peek{transform:translateY(-56%)}.wedding-site .is-open .envelope-fold{transform:rotateX(174deg);z-index:1}}
+/* Use the actual approved envelope, without reconstructed folds or decorations. */
+.wedding-site .original-envelope-stage{display:grid;grid-template-rows:1fr;overflow:hidden;perspective:1400px;transition:grid-template-rows 1.15s cubic-bezier(.22,1,.36,1),opacity .9s ease;opacity:1}
+.wedding-site .original-envelope-photo{display:block;width:100%;height:auto;min-height:0;object-fit:contain;mix-blend-mode:multiply;transform-origin:50% 80%;transition:transform 1.2s cubic-bezier(.22,1,.36,1),opacity .8s ease;mask-image:linear-gradient(transparent,#000 8%,#000 92%,transparent)}
+.wedding-site .is-open .original-envelope-photo{transform:translateY(24px) rotateX(8deg) scale(.97);opacity:0}
+.wedding-site .letter-revealed .original-envelope-stage{grid-template-rows:0fr;opacity:0}
+.wedding-site .original-envelope-inner{display:block;min-height:0;overflow:hidden}
+.wedding-site .envelope-open-label{margin-top:-12px}
+.wedding-site .letter-artwork{display:flex;flex-direction:column;align-items:center;aspect-ratio:auto;margin:0 0 30px;padding-top:12px}
+.wedding-site .letter-couple{position:relative;width:min(100%,320px);aspect-ratio:1/1;overflow:hidden;mask-image:radial-gradient(ellipse at 50% 48%,#000 48%,transparent 74%)}
+.wedding-site .letter-couple img{position:absolute;right:0;top:0;width:300%;max-width:none;height:100%;object-fit:fill}
+.wedding-site .letter-artwork .letter-date{position:static;width:auto;margin-top:10px;font-size:9px;letter-spacing:2px;text-align:center;color:#928269}
+.wedding-site .honeymoon-reveal{animation:stationery-letter 1.3s cubic-bezier(.22,1,.36,1) both}
+@media(max-width:600px){.wedding-site .letter-couple{width:250px;max-width:100%}.wedding-site .letter-artwork{margin-inline:0}.wedding-site .letter-artwork .letter-date{font-size:8px}.wedding-site .envelope-open-label{margin-top:0}}
+@media(prefers-reduced-motion:reduce){.wedding-site .original-envelope-stage,.wedding-site .original-envelope-photo{transition:none}.wedding-site .honeymoon-reveal{animation:none}}
+
+/* Transparent original artwork with a quiet invitation to interact. */
+.wedding-site .original-envelope-inner{padding:24px 18px 30px}
+.wedding-site .original-envelope-photo{mix-blend-mode:normal;mask-image:none;filter:drop-shadow(0 10px 9px #66453f25);transform-origin:50% 65%}
+@media(prefers-reduced-motion:no-preference){
+  .wedding-site .letter-envelope:not(.is-open) .original-envelope-photo{animation:envelope-invitation 9s 2s ease-in-out infinite}
+  .wedding-site .letter-envelope:not(.is-open) .envelope-trigger:hover .original-envelope-photo,.wedding-site .letter-envelope:not(.is-open) .envelope-trigger:focus-visible .original-envelope-photo{animation:none;transform:translateY(-5px) rotate(-.5deg)}
+}
+@keyframes envelope-invitation{0%,76%,100%{transform:translateY(0) rotate(0)}82%{transform:translateY(-5px) rotate(-.6deg)}89%{transform:translateY(-3px) rotate(.45deg)}95%{transform:translateY(0) rotate(0)}}
+@media(max-width:600px){.wedding-site .original-envelope-inner{padding:16px 8px 24px}}

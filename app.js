@@ -15,7 +15,8 @@ const guestActions = {
   en: {reply:'Confirm attendance', updates:'Timings and transport details will be added to the programme once confirmed.', programme:'View the programme'}
 };
 for (const lang of Object.keys(copy)) copy[lang].nav.splice(1,0,dayCopy[lang].title);
-const pages=['home','wedding-day','locations','accommodation','rsvp'];
+for (const lang of Object.keys(copy)) copy[lang].nav.push(window.WeddingHoneymoon.nav(lang));
+const pages=['home','wedding-day','locations','accommodation','rsvp','honeymoon'];
 let language='es';
 try { const saved=localStorage.getItem('wedding-language'); if(copy[saved]) language=saved; } catch {}
 function render(){
@@ -47,9 +48,11 @@ function render(){
     content += `<section class="photo-moment" aria-labelledby="moment-title"><img class="photo-moment-image" src="assets/couple-sunset.webp" alt="${moment.alt}" width="2200" height="1650" loading="lazy" decoding="async"><div class="photo-moment-copy"><p class="eyebrow">Chiara &amp; Yago</p><h2 id="moment-title">${moment.title}</h2></div></section>`;
   }
   if(page==='locations') content=window.WeddingLocations.render(t,language,heading);
+  if(page==='honeymoon') content=window.WeddingHoneymoon.render(language,heading);
   document.querySelector('#main').innerHTML=content;
   window.WeddingAccommodation.init(document.querySelector('#main'),language);
   window.WeddingLocations.init(document.querySelector('#main'),language,t);
+  window.WeddingHoneymoon.init(document.querySelector('#main'),language);
   window.initWeddingMotion?.(document.querySelector('#main'));
   if(page==='rsvp')bindRsvp();
 }
