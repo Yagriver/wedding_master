@@ -236,7 +236,7 @@
 
 /* A botanical pause between the welcome and the practical details. */
 .wedding-site .hero { margin-bottom: 22px; }
-.wedding-site .floral-divider { display:flex; align-items:center; justify-content:center; gap:30px; max-width:760px; margin:0 auto 28px; padding:0 32px; }
+.wedding-site .floral-divider { background:var(--paper); isolation:isolate; display:flex; align-items:center; justify-content:center; gap:30px; max-width:760px; margin:0 auto 28px; padding:0 32px; }
 .wedding-site .floral-divider img { display:block; width:340px; height:auto; flex-shrink:0; mix-blend-mode:darken; }
 .wedding-site .floral-divider span { height:1px; background:var(--line); flex:1; }
 .wedding-site .home-details { border-top:0; }
