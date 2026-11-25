@@ -18,6 +18,7 @@ for (const lang of Object.keys(copy)) copy[lang].nav.splice(1,0,dayCopy[lang].ti
 for (const lang of Object.keys(copy)) copy[lang].nav.push(window.WeddingHoneymoon.nav(lang));
 const pages=['home','wedding-day','locations','accommodation','rsvp','honeymoon'];
 let language='es';
+let homeInvitationOpened=false;
 try { const saved=localStorage.getItem('wedding-language'); if(copy[saved]) language=saved; } catch {}
 function render(){
   const t=copy[language], actions=guestActions[language];
@@ -49,7 +50,18 @@ function render(){
   }
   if(page==='locations') content=window.WeddingLocations.render(t,language,heading);
   if(page==='honeymoon') content=window.WeddingHoneymoon.render(language,heading);
+  const welcome=page==='home'&&!homeInvitationOpened;
+  document.body.classList.toggle('invitation-welcome',welcome);
+  document.body.classList.remove('home-invitation-entered');
+  if(welcome) content=window.WeddingHomeInvitation.render(language);
   document.querySelector('#main').innerHTML=content;
+  window.WeddingHomeInvitation.init(document.querySelector('#main'),language,()=>{
+    homeInvitationOpened=true;
+    render();
+    document.body.classList.add('home-invitation-entered');
+    window.scrollTo(0,0);
+    document.querySelector('#main').focus({preventScroll:true});
+  });
   window.WeddingAccommodation.init(document.querySelector('#main'),language);
   window.WeddingLocations.init(document.querySelector('#main'),language,t);
   window.WeddingHoneymoon.init(document.querySelector('#main'),language);

@@ -1,0 +1,63 @@
+.wedding-site.invitation-welcome{background:radial-gradient(ellipse at 50% 48%,#f4ebe2 0,transparent 60%),#faf7f0}
+.wedding-site.invitation-welcome>header{border:0;display:flex;justify-content:flex-end;padding-block:20px;min-height:74px}
+.wedding-site.invitation-welcome>header .monogram,.wedding-site.invitation-welcome #navigation,.wedding-site.invitation-welcome>footer{display:none}
+.wedding-site .home-invitation{max-width:900px;margin:0 auto;padding:18px 24px 45px;text-align:center;min-height:calc(100svh - 150px)}
+.wedding-site .home-invitation>.eyebrow{font-size:10px;letter-spacing:3px;color:#997b67;margin:0 0 16px}
+.wedding-site .home-invitation h1{font:400 clamp(42px,5vw,66px)/1.1 'Cormorant Garamond',Georgia,serif;margin:0;color:#705954}
+.wedding-site .home-invitation h1 em{font-weight:400;color:#ad8b75}
+.wedding-site .invitation-dateline{font-size:10px;letter-spacing:2.8px;color:#8c806e;margin:19px 0 10px}.invitation-dateline span{margin:0 10px}
+.wedding-site .welcome-envelope-button{display:block;width:100%;border:0;background:none;padding:0;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.wedding-site .welcome-envelope-button:disabled{cursor:default;opacity:1}
+.wedding-site .welcome-envelope-button:focus-visible{outline:1px solid #aa8761;outline-offset:8px;border-radius:8px}
+.wedding-site .welcome-envelope-scene{display:block;position:relative;isolation:isolate;perspective:1500px;width:min(100%,680px);aspect-ratio:1588/990;margin:70px auto 24px}
+.wedding-site .welcome-closed{position:absolute;inset:0;width:100%;height:100%;z-index:5;filter:drop-shadow(0 13px 12px #68433d25);transition:opacity .85s .35s ease}
+.wedding-site .welcome-paper-back,.wedding-site .welcome-paper-front,.wedding-site .welcome-flap{position:absolute;inset:0;opacity:0;transition:opacity .8s .35s;pointer-events:none}
+.wedding-site .welcome-paper-back{z-index:0}.wedding-site .welcome-paper-front{z-index:3}.wedding-site .welcome-flap{z-index:1;transform-origin:50% 8.28%;transform:rotateX(-178deg);transition:transform 1.5s .4s cubic-bezier(.4,0,.2,1),opacity .8s .35s}
+.wedding-site .welcome-paper-back img,.wedding-site .welcome-paper-front img,.wedding-site .welcome-flap img{position:absolute;width:124%;height:137.4%;max-width:none;left:-12%;top:-40.5%;object-fit:fill}
+.wedding-site .welcome-paper-back img{clip-path:polygon(0 35.5%,100% 35.5%,100% 100%,0 100%)}
+.wedding-site .welcome-paper-front img{clip-path:polygon(0 35.5%,12.3% 35.5%,48.8% 74.2%,87.7% 35.5%,100% 35.5%,100% 100%,0 100%)}
+.wedding-site .welcome-flap img{clip-path:polygon(0 0,100% 0,100% 35.7%,0 35.7%)}
+.wedding-site .welcome-card{position:absolute;left:6%;top:15%;width:88%;aspect-ratio:1170/530;display:block;overflow:visible;clip-path:inset(-30% 0 -50% 0);z-index:2;opacity:0;transform:translateY(12%);box-shadow:0 12px 35px #634d3c25;transition:opacity .5s 1s,transform 2.5s .9s cubic-bezier(.4,0,.2,1)}
+
+.wedding-site .welcome-invitation-film{display:block;width:100%;height:100%;aspect-ratio:1170/530;object-fit:cover;pointer-events:none;transform-origin:100% 15%}
+.wedding-site .welcome-ribbon{position:absolute;left:62%;top:3%;width:33%;height:96%;object-fit:contain;z-index:4;opacity:0;transition:opacity .8s .35s}
+.wedding-site .welcome-seal{position:absolute;left:40%;top:57%;width:16%;height:23%;overflow:hidden;clip-path:ellipse(49% 49% at 50% 50%);z-index:4;opacity:0;transition:opacity .8s .35s}
+.wedding-site .welcome-seal img{position:absolute;width:661.67%;height:471.43%;max-width:none;left:-262.5%;top:-257.14%;object-fit:fill}
+.wedding-site .welcome-open-label{display:inline-flex;align-items:center;gap:18px;border:1px solid #ba9b7b80;border-radius:30px;padding:13px 25px;font-size:14px;color:#80624f;background:#fffaf080;transition:opacity .4s,background .3s}.welcome-open-label>span{color:#ad8756}
+.wedding-site .welcome-hint{display:block;margin-top:13px;font-size:12px;letter-spacing:.3px;color:#998574;transition:opacity .4s}
+.wedding-site .welcome-note{font:italic 21px 'Cormorant Garamond',Georgia,serif;color:#9b8273;margin-top:27px}
+.wedding-site .welcome-envelope-button:hover .welcome-open-label{background:#f0e4d6}
+.wedding-site .is-opening .welcome-closed,.wedding-site .is-opening .welcome-open-label,.wedding-site .is-opening .welcome-hint{opacity:0}
+.wedding-site .is-opening .welcome-paper-back,.wedding-site .is-opening .welcome-paper-front,.wedding-site .is-opening .welcome-flap,.wedding-site .is-opening .welcome-ribbon,.wedding-site .is-opening .welcome-seal{opacity:1}
+.wedding-site .is-opening .welcome-flap{transform:rotateX(0)}.wedding-site .is-opening .welcome-card{opacity:1;transform:translateY(-55%)}
+.wedding-site .welcome-butterfly{position:absolute;width:32px;height:25px;left:50%;top:30%;color:#d8c4a6;opacity:0;z-index:6;pointer-events:none}.welcome-butterfly svg{width:100%;height:100%;overflow:visible}.wing-left,.wing-right{transform-origin:30px 28px}
+.wedding-site .butterfly-0{--x:-210px;--y:-145px;--turn:-25deg}.wedding-site .butterfly-1{--x:195px;--y:-180px;--turn:30deg;color:#c4c8af;width:26px}.wedding-site .butterfly-2{--x:95px;--y:-240px;--turn:10deg;width:20px;color:#d9bdb2}
+.wedding-site .is-opening .welcome-butterfly{animation:welcome-flight 2.1s 1.25s ease-in-out both}.wedding-site .is-opening .butterfly-1{animation-delay:1.45s}.wedding-site .is-opening .butterfly-2{animation-delay:1.65s}.is-opening .wing-left{animation:welcome-wing .25s infinite alternate}.is-opening .wing-right{animation:welcome-wing .25s .12s infinite alternate}
+.wedding-site .welcome-pollen{position:absolute;left:calc(32% + var(--i)*6%);top:45%;width:3px;height:3px;border-radius:50%;background:#c6a167;opacity:0;z-index:6;pointer-events:none}.is-opening .welcome-pollen{animation:welcome-pollen 1.8s calc(1.2s + var(--i)*.1s) ease-out both}
+.wedding-site.home-invitation-entered #main{animation:welcome-home 1.25s cubic-bezier(.2,.65,.3,1) both}
+.wedding-site.home-invitation-entered>header,.wedding-site.home-invitation-entered>footer{animation:welcome-home 1.4s ease both}
+@keyframes welcome-flight{0%{opacity:0;transform:translate(0,0) scale(.5)}20%{opacity:.75}75%{opacity:.65}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--turn)) scale(1)}}
+@keyframes welcome-wing{to{transform:scaleX(.3)}}@keyframes welcome-pollen{25%{opacity:.6}100%{opacity:0;transform:translateY(-100px)}}@keyframes welcome-home{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:no-preference){.home-invitation:not(.is-opening) .welcome-envelope-scene{animation:envelope-invitation 9s 2s ease-in-out infinite}.home-invitation.is-leaving{animation:welcome-away .85s ease forwards}}
+@keyframes welcome-away{to{opacity:0}}
+@media(max-width:600px){.wedding-site .home-invitation{padding:20px 12px 30px}.wedding-site .welcome-envelope-scene{margin-top:72px}.wedding-site .welcome-note{font-size:18px}.wedding-site .welcome-card{gap:7px}.wedding-site .welcome-card small{font-size:7px}.wedding-site .welcome-butterfly{width:22px}.wedding-site .butterfly-0{--x:-100px;--y:-100px}.wedding-site .butterfly-1{--x:100px;--y:-120px}.wedding-site .butterfly-2{--x:30px;--y:-150px}}
+@media(prefers-reduced-motion:reduce){.wedding-site .home-invitation *,.wedding-site.home-invitation-entered #main{animation:none!important;transition:none!important}}
+/* Clear space visually for the lifted flap without shifting the page. */
+.wedding-site .home-invitation>h1,.wedding-site .home-invitation>.eyebrow,.wedding-site .home-invitation>.invitation-dateline,.wedding-site .home-invitation>.welcome-note{transition:opacity .5s ease}
+.wedding-site .home-invitation.is-opening>h1,.wedding-site .home-invitation.is-opening>.eyebrow,.wedding-site .home-invitation.is-opening>.invitation-dateline,.wedding-site .home-invitation.is-opening>.welcome-note{opacity:0}
+
+/* The envelope settles away only after the original sleeve has risen clear. */
+@media(prefers-reduced-motion:no-preference){
+ .wedding-site .is-opening .welcome-paper-back,.wedding-site .is-opening .welcome-paper-front,.wedding-site .is-opening .welcome-ribbon,.wedding-site .is-opening .welcome-seal{animation:welcome-envelope-settle 2.2s 1.9s cubic-bezier(.4,0,.3,1) forwards}
+ .wedding-site .is-opening .welcome-flap{animation:welcome-envelope-settle 2.2s 1.9s cubic-bezier(.4,0,.3,1) forwards}
+}
+@keyframes welcome-envelope-settle{0%{transform:translateY(0);opacity:1}45%{opacity:.65}100%{transform:translateY(28%);opacity:0}}
+
+
+/* Camera movement stays inside the sleeve: no extra horizontal room on phones. */
+@media(prefers-reduced-motion:no-preference){.wedding-site .is-opening .welcome-invitation-film{animation:welcome-couple-closeup 3.1s 5.5s cubic-bezier(.37,0,.63,1) forwards}}
+@keyframes welcome-couple-closeup{0%{transform:scale(1)}100%{transform:scale(1.45)}}
+@media(prefers-reduced-motion:reduce){.wedding-site.home-invitation-entered>header,.wedding-site.home-invitation-entered>footer{animation:none}}
+
+/* Prevent animated layers from creating a horizontal scrollbar during the reveal. */
+.wedding-site.invitation-welcome{overflow-x:clip}
